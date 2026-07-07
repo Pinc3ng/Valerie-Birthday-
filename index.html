@@ -1,309 +1,283 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vallerie Valencia's Sweet 17 🎀</title>
-  <meta name="description" content="You are invited to celebrate Vallerie Valencia's Sweet 17th Birthday Party on October 24, 2026 at Chloe W Villa." />
+  <title>Vallerie Valencia — Sweet Seventeen</title>
+  <meta name="description" content="An intimate celebration of Vallerie Valencia's seventeenth birthday. October 24, 2026 · Chloe W Villa." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Floating Particles -->
-  <div class="particles" id="particles"></div>
+  <!-- Canvas for subtle particle effect -->
+  <canvas id="canvas" aria-hidden="true"></canvas>
 
-  <!-- ====== HERO SECTION ====== -->
+  <!-- ====== NAV ====== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <span class="nav-name">Vallerie Valencia</span>
+      <div class="nav-links">
+        <a href="#gallery">Gallery</a>
+        <a href="#gift">Gift</a>
+        <a href="#wishes">Wishes</a>
+        <a href="#rsvp">RSVP</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ====== HERO ====== -->
   <section class="hero" id="home">
-    <div class="hero-overlay"></div>
     <div class="hero-content">
-      <p class="hero-eyebrow">✨ You Are Invited To ✨</p>
-      <h1 class="hero-name">Vallerie Valencia</h1>
-      <div class="hero-script">Sweet Seventeen</div>
-      <div class="hero-divider">
-        <span class="divider-line"></span>
-        <span class="divider-gem">💎</span>
-        <span class="divider-line"></span>
-      </div>
-      <div class="hero-details">
-        <div class="detail-item">
-          <span class="detail-label">OCTOBER</span>
-          <span class="detail-number">24</span>
-          <span class="detail-label">2026</span>
+      <p class="hero-pre">You Are Cordially Invited</p>
+      <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
+      <h1 class="hero-title">Vallerie<br><em>Valencia</em></h1>
+      <p class="hero-sub">Sweet Seventeen</p>
+      <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="meta-label">Date</span>
+          <span class="meta-value">Saturday, October 24 · 2026</span>
+        </div>
+        <div class="hero-meta-sep"></div>
+        <div class="hero-meta-item">
+          <span class="meta-label">Time</span>
+          <span class="meta-value">6:00 in the evening</span>
+        </div>
+        <div class="hero-meta-sep"></div>
+        <div class="hero-meta-item">
+          <span class="meta-label">Venue</span>
+          <span class="meta-value">Chloe W Villa · Jl. Tangguk Bongkar I No.74</span>
+        </div>
+        <div class="hero-meta-sep"></div>
+        <div class="hero-meta-item">
+          <span class="meta-label">Dress Code</span>
+          <span class="meta-value">All White</span>
         </div>
       </div>
-      <div class="hero-info-row">
-        <div class="info-pill">🗓️ Saturday</div>
-        <div class="info-pill">⏰ 6:00 PM</div>
-        <div class="info-pill">👗 White Dresscode</div>
-      </div>
-      <div class="hero-location">
-        <span>📍 Chloe W Villa</span>
-        <span class="location-address">Jl. Tangguk Bongkar I No.74</span>
-      </div>
-      <a href="#gallery" class="hero-cta-btn">Explore The Celebration ↓</a>
+      <a href="#rsvp" class="hero-btn">Confirm Attendance</a>
     </div>
-    <div class="scroll-indicator">
-      <div class="scroll-dot"></div>
+    <div class="hero-scroll" aria-hidden="true">
+      <span class="scroll-line"></span>
     </div>
   </section>
 
-  <!-- ====== COUNTDOWN SECTION ====== -->
-  <section class="countdown-section" id="countdown">
-    <div class="section-container">
-      <h2 class="section-title">Menghitung Hari</h2>
-      <p class="section-subtitle">Menuju momen yang tak terlupakan</p>
+  <!-- ====== COUNTDOWN ====== -->
+  <section class="section countdown-section" id="countdown">
+    <div class="container">
+      <p class="eyebrow">Counting Down To</p>
+      <h2 class="section-heading">The Celebration</h2>
       <div class="countdown-grid" id="countdown-timer">
-        <div class="countdown-card">
-          <span class="count-num" id="days">00</span>
-          <span class="count-label">Hari</span>
+        <div class="c-unit" id="cu-days">
+          <span class="c-num" id="days">000</span>
+          <span class="c-label">Days</span>
         </div>
-        <div class="countdown-sep">✦</div>
-        <div class="countdown-card">
-          <span class="count-num" id="hours">00</span>
-          <span class="count-label">Jam</span>
+        <div class="c-divider">:</div>
+        <div class="c-unit" id="cu-hours">
+          <span class="c-num" id="hours">00</span>
+          <span class="c-label">Hours</span>
         </div>
-        <div class="countdown-sep">✦</div>
-        <div class="countdown-card">
-          <span class="count-num" id="minutes">00</span>
-          <span class="count-label">Menit</span>
+        <div class="c-divider">:</div>
+        <div class="c-unit" id="cu-minutes">
+          <span class="c-num" id="minutes">00</span>
+          <span class="c-label">Minutes</span>
         </div>
-        <div class="countdown-sep">✦</div>
-        <div class="countdown-card">
-          <span class="count-num" id="seconds">00</span>
-          <span class="count-label">Detik</span>
+        <div class="c-divider">:</div>
+        <div class="c-unit" id="cu-seconds">
+          <span class="c-num" id="seconds">00</span>
+          <span class="c-label">Seconds</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ====== PHOTO GALLERY SECTION ====== -->
-  <section class="gallery-section" id="gallery">
-    <div class="section-container">
-      <div class="section-header">
-        <p class="section-eyebrow">Momen Berharga</p>
-        <h2 class="section-title">Photo Gallery</h2>
-        <p class="section-subtitle">Kenangan indah yang kita abadikan bersama 📸</p>
-      </div>
+  <!-- ====== GALLERY ====== -->
+  <section class="section gallery-section" id="gallery">
+    <div class="container">
+      <p class="eyebrow">Precious Moments</p>
+      <h2 class="section-heading">Gallery</h2>
+      <p class="section-body">Photos will be shared here after the celebration.</p>
       <div class="gallery-grid">
-        <!-- Photo Placeholders -->
-        <div class="gallery-item placeholder" id="photo-1">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">📷</div>
-            <span>Foto akan segera hadir</span>
+        <div class="g-item ph" id="photo-1">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
-        <div class="gallery-item placeholder tall" id="photo-2">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">🌸</div>
-            <span>Coming Soon</span>
+        <div class="g-item ph tall" id="photo-2">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
-        <div class="gallery-item placeholder" id="photo-3">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">✨</div>
-            <span>Foto akan segera hadir</span>
+        <div class="g-item ph" id="photo-3">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
-        <div class="gallery-item placeholder wide" id="photo-4">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">🎀</div>
-            <span>Coming Soon</span>
+        <div class="g-item ph wide" id="photo-4">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
-        <div class="gallery-item placeholder" id="photo-5">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">💕</div>
-            <span>Foto akan segera hadir</span>
+        <div class="g-item ph" id="photo-5">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
-        <div class="gallery-item placeholder" id="photo-6">
-          <div class="placeholder-inner">
-            <div class="placeholder-icon">🌺</div>
-            <span>Coming Soon</span>
+        <div class="g-item ph" id="photo-6">
+          <div class="ph-inner">
+            <span class="ph-icon">◻</span>
+            <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
       </div>
-      <p class="gallery-note">📌 Foto-foto akan segera ditambahkan setelah acara berlangsung</p>
     </div>
   </section>
 
-  <!-- ====== GIFT SECTION ====== -->
-  <section class="gift-section" id="gift">
-    <div class="section-container">
-      <div class="section-header">
-        <p class="section-eyebrow">Hadiah Online</p>
-        <h2 class="section-title">Send a Gift 🎁</h2>
-        <p class="section-subtitle">Kirimkan kasih sayang kamu untuk Vallerie</p>
-      </div>
-      <div class="gift-cards">
+  <!-- ====== GIFT ====== -->
+  <section class="section gift-section" id="gift">
+    <div class="container">
+      <p class="eyebrow">Send a Gift</p>
+      <h2 class="section-heading">Gift Registry</h2>
+      <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, the details below are available for your convenience.</p>
+      <div class="gift-grid">
         <div class="gift-card" id="gift-card-bca">
-          <div class="bank-logo">🏦</div>
-          <div class="bank-name">Bank BCA</div>
-          <div class="account-name">Vallerie Valencia</div>
-          <div class="account-number" id="bca-number">
-            <span class="number-text">Segera Hadir</span>
+          <p class="gift-bank">Bank BCA</p>
+          <p class="gift-owner">Vallerie Valencia</p>
+          <div class="gift-num-box">
+            <span class="gift-num" id="bca-number">Coming Soon</span>
           </div>
-          <button class="copy-btn" onclick="copyAccount('bca-number')" id="copy-bca">
-            <span>📋 Salin Nomor Rekening</span>
-          </button>
-          <div class="copied-msg" id="copied-bca">✅ Tersalin!</div>
+          <button class="gift-copy-btn" onclick="copyAccount('bca')" id="btn-bca">Copy Account Number</button>
+          <span class="gift-copied" id="copied-bca">Copied</span>
         </div>
         <div class="gift-card" id="gift-card-mandiri">
-          <div class="bank-logo">💳</div>
-          <div class="bank-name">Bank Mandiri</div>
-          <div class="account-name">Vallerie Valencia</div>
-          <div class="account-number" id="mandiri-number">
-            <span class="number-text">Segera Hadir</span>
+          <p class="gift-bank">Bank Mandiri</p>
+          <p class="gift-owner">Vallerie Valencia</p>
+          <div class="gift-num-box">
+            <span class="gift-num" id="mandiri-number">Coming Soon</span>
           </div>
-          <button class="copy-btn" onclick="copyAccount('mandiri-number')" id="copy-mandiri">
-            <span>📋 Salin Nomor Rekening</span>
-          </button>
-          <div class="copied-msg" id="copied-mandiri">✅ Tersalin!</div>
+          <button class="gift-copy-btn" onclick="copyAccount('mandiri')" id="btn-mandiri">Copy Account Number</button>
+          <span class="gift-copied" id="copied-mandiri">Copied</span>
         </div>
         <div class="gift-card" id="gift-card-gopay">
-          <div class="bank-logo">📱</div>
-          <div class="bank-name">GoPay / DANA</div>
-          <div class="account-name">Vallerie Valencia</div>
-          <div class="account-number" id="gopay-number">
-            <span class="number-text">Segera Hadir</span>
+          <p class="gift-bank">GoPay · DANA</p>
+          <p class="gift-owner">Vallerie Valencia</p>
+          <div class="gift-num-box">
+            <span class="gift-num" id="gopay-number">Coming Soon</span>
           </div>
-          <button class="copy-btn" onclick="copyAccount('gopay-number')" id="copy-gopay">
-            <span>📋 Salin Nomor</span>
-          </button>
-          <div class="copied-msg" id="copied-gopay">✅ Tersalin!</div>
+          <button class="gift-copy-btn" onclick="copyAccount('gopay')" id="btn-gopay">Copy Number</button>
+          <span class="gift-copied" id="copied-gopay">Copied</span>
         </div>
       </div>
-      <p class="gift-note">💌 Setiap hadiah dari kalian adalah kebahagiaan yang tak ternilai untuk Vallerie</p>
     </div>
   </section>
 
-  <!-- ====== WISHES SECTION ====== -->
-  <section class="wishes-section" id="wishes">
-    <div class="section-container">
-      <div class="section-header">
-        <p class="section-eyebrow">Ucapan & Doa</p>
-        <h2 class="section-title">Wishes for Vallerie 💌</h2>
-        <p class="section-subtitle">Tuliskan ucapan dan doa terbaik kamu untuk Vallerie Valencia</p>
-      </div>
-      <div class="wish-form-wrapper">
-        <form class="wish-form" id="wish-form" onsubmit="submitWish(event)">
-          <div class="form-group">
-            <label for="wish-name">Nama Kamu ✨</label>
-            <input type="text" id="wish-name" placeholder="Masukkan namamu..." required maxlength="50" />
+  <!-- ====== WISHES ====== -->
+  <section class="section wishes-section" id="wishes">
+    <div class="container">
+      <p class="eyebrow">Leave a Message</p>
+      <h2 class="section-heading">Wishes for Vallerie</h2>
+      <p class="section-body">Share your warmest wishes and blessings with Vallerie on this special milestone.</p>
+
+      <div class="form-wrapper">
+        <form id="wish-form" onsubmit="submitWish(event)">
+          <div class="field">
+            <label for="wish-name">Your Name</label>
+            <input type="text" id="wish-name" placeholder="Enter your name" required maxlength="50" autocomplete="off" />
           </div>
-          <div class="form-group">
-            <label for="wish-message">Ucapan & Doa 💕</label>
-            <textarea id="wish-message" placeholder="Tulis ucapan terbaik kamu untuk Vallerie..." required maxlength="300" rows="4"></textarea>
-            <span class="char-count" id="char-count">0/300</span>
+          <div class="field">
+            <label for="wish-message">Your Message</label>
+            <textarea id="wish-message" placeholder="Write your wishes here..." required maxlength="300" rows="4"></textarea>
+            <span class="field-count" id="char-count">0 / 300</span>
           </div>
-          <button type="submit" class="submit-wish-btn" id="submit-wish-btn">
-            <span>💌 Kirim Ucapan</span>
-          </button>
+          <button type="submit" class="form-btn" id="submit-wish">Send Wishes</button>
         </form>
       </div>
-      <!-- Wishes Display -->
-      <div class="wishes-display" id="wishes-display">
-        <!-- Wishes will be rendered here by JS -->
-      </div>
-      <div class="wishes-empty" id="wishes-empty">
-        <div class="empty-icon">🌸</div>
-        <p>Jadilah yang pertama memberikan ucapan untuk Vallerie!</p>
-      </div>
+
+      <div class="wishes-wall" id="wishes-display"></div>
+      <p class="wall-empty" id="wishes-empty">Be the first to leave a wish for Vallerie.</p>
     </div>
   </section>
 
-  <!-- ====== ATTENDANCE SECTION ====== -->
-  <section class="attendance-section" id="attendance">
-    <div class="section-container">
-      <div class="section-header">
-        <p class="section-eyebrow">Konfirmasi Kehadiran</p>
-        <h2 class="section-title">RSVP 🎉</h2>
-        <p class="section-subtitle">Kami tak sabar menanti kehadiran kamu!</p>
-      </div>
+  <!-- ====== RSVP ====== -->
+  <section class="section rsvp-section" id="rsvp">
+    <div class="container">
+      <p class="eyebrow">Kindly Reply</p>
+      <h2 class="section-heading">RSVP</h2>
+      <p class="section-body">We warmly look forward to celebrating with you. Please confirm your attendance below.</p>
 
-      <!-- Stats Counter -->
-      <div class="attendance-stats">
-        <div class="stat-card hadir">
-          <div class="stat-icon">🥂</div>
-          <span class="stat-number" id="count-hadir">0</span>
-          <span class="stat-label">Akan Hadir</span>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-num" id="count-hadir">0</span>
+          <span class="stat-lbl">Attending</span>
         </div>
-        <div class="stat-card-divider">✦</div>
-        <div class="stat-card tidak-hadir">
-          <div class="stat-icon">💔</div>
-          <span class="stat-number" id="count-tidak">0</span>
-          <span class="stat-label">Tidak Hadir</span>
+        <div class="stat-line"></div>
+        <div class="stat">
+          <span class="stat-num" id="count-tidak">0</span>
+          <span class="stat-lbl">Not Attending</span>
         </div>
-        <div class="stat-card-divider">✦</div>
-        <div class="stat-card total">
-          <div class="stat-icon">👑</div>
-          <span class="stat-number" id="count-total">0</span>
-          <span class="stat-label">Total RSVP</span>
+        <div class="stat-line"></div>
+        <div class="stat">
+          <span class="stat-num" id="count-total">0</span>
+          <span class="stat-lbl">Total Replies</span>
         </div>
       </div>
 
-      <!-- RSVP Form -->
-      <div class="rsvp-form-wrapper">
-        <form class="rsvp-form" id="rsvp-form" onsubmit="submitRSVP(event)">
-          <div class="form-group">
-            <label for="rsvp-name">Nama Lengkap ✨</label>
-            <input type="text" id="rsvp-name" placeholder="Masukkan nama lengkapmu..." required maxlength="60" />
+      <!-- Form -->
+      <div class="form-wrapper">
+        <form id="rsvp-form" onsubmit="submitRSVP(event)">
+          <div class="field">
+            <label for="rsvp-name">Full Name</label>
+            <input type="text" id="rsvp-name" placeholder="Enter your full name" required maxlength="60" autocomplete="off" />
           </div>
-          <div class="form-group">
-            <label>Konfirmasi Kehadiran 🎀</label>
-            <div class="rsvp-options">
-              <label class="rsvp-option hadir-option">
+          <div class="field">
+            <label>Attendance</label>
+            <div class="rsvp-choices">
+              <label class="choice" id="choice-hadir">
                 <input type="radio" name="rsvp-status" value="hadir" id="rsvp-hadir" required />
-                <span class="option-box">
-                  <span class="option-icon">🥂</span>
-                  <span class="option-text">Ya, Saya Hadir!</span>
+                <span class="choice-box">
+                  <span class="choice-mark"></span>
+                  <span class="choice-label">I will attend</span>
                 </span>
               </label>
-              <label class="rsvp-option tidak-option">
+              <label class="choice" id="choice-tidak">
                 <input type="radio" name="rsvp-status" value="tidak" id="rsvp-tidak" />
-                <span class="option-box">
-                  <span class="option-icon">💔</span>
-                  <span class="option-text">Maaf, Tidak Bisa Hadir</span>
+                <span class="choice-box">
+                  <span class="choice-mark"></span>
+                  <span class="choice-label">Unable to attend</span>
                 </span>
               </label>
             </div>
           </div>
-          <button type="submit" class="submit-rsvp-btn" id="submit-rsvp-btn">
-            <span>🎉 Kirim Konfirmasi</span>
-          </button>
+          <button type="submit" class="form-btn" id="submit-rsvp">Confirm</button>
         </form>
       </div>
 
-      <!-- RSVP List -->
-      <div class="rsvp-list-wrapper" id="rsvp-list-wrapper">
-        <h3 class="rsvp-list-title">Daftar Tamu 👑</h3>
-        <div class="rsvp-list" id="rsvp-list"></div>
-        <div class="rsvp-empty" id="rsvp-empty">
-          <p>🌸 Belum ada yang RSVP. Jadilah yang pertama!</p>
-        </div>
+      <!-- Guest List -->
+      <div class="guest-list-wrap">
+        <h3 class="guest-list-title">Guest List</h3>
+        <div class="guest-list" id="rsvp-list"></div>
+        <p class="wall-empty" id="rsvp-empty">No replies yet. Be the first to confirm.</p>
       </div>
     </div>
   </section>
 
   <!-- ====== FOOTER ====== -->
-  <footer class="footer" id="footer">
-    <div class="footer-content">
-      <div class="footer-logo">Vallerie Valencia</div>
-      <div class="footer-script">Sweet Seventeen · October 24, 2026</div>
-      <div class="footer-hearts">💕 🌸 ✨ 🎀 ✨ 🌸 💕</div>
-      <p class="footer-copy">Made with love for Vallerie Valencia's Sweet 17 🎂</p>
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-name">Vallerie Valencia</p>
+      <p class="footer-detail">Sweet Seventeen &nbsp;·&nbsp; October 24, 2026</p>
+      <div class="footer-rule"></div>
+      <p class="footer-copy">Crafted with love · All rights reserved</p>
     </div>
   </footer>
-
-  <!-- Music Player (optional ambient) -->
-  <div class="music-player" id="music-player">
-    <button class="music-btn" id="music-btn" onclick="toggleMusic()" title="Play/Pause Music">
-      🎵
-    </button>
-  </div>
 
   <script src="script.js"></script>
 </body>
