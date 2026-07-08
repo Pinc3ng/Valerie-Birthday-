@@ -395,14 +395,41 @@ document.addEventListener('DOMContentLoaded', () => {
 let audio      = null;
 let musicOn    = false;
 let started    = false;
+let fadeInterval = null;
+const TARGET_VOLUME = 0.6;
+const FADE_TIME = 2000; // 2 seconds fade in
 
 function initAudio() {
   if (audio) return;
   audio = document.getElementById('bg-audio');
   if (!audio) return;
-  audio.volume = 0.6;
-  audio.addEventListener('play',  () => setMusicVisual(true));
+  audio.volume = 0; // Mulai dari 0 untuk fade-in
+
+  audio.addEventListener('play',  () => {
+    setMusicVisual(true);
+    fadeIn();
+  });
   audio.addEventListener('pause', () => setMusicVisual(false));
+}
+
+function fadeIn() {
+  if (!audio) return;
+  clearInterval(fadeInterval);
+  
+  let vol = 0;
+  audio.volume = vol;
+  const step = 0.02;
+  const intervalSpeed = (FADE_TIME * step) / TARGET_VOLUME;
+
+  fadeInterval = setInterval(() => {
+    vol += step;
+    if (vol >= TARGET_VOLUME) {
+      audio.volume = TARGET_VOLUME;
+      clearInterval(fadeInterval);
+    } else {
+      audio.volume = vol;
+    }
+  }, intervalSpeed);
 }
 
 function setMusicVisual(playing) {
