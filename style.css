@@ -1328,12 +1328,7 @@ input, textarea { font-family: var(--sans); }
 .splash-btn:active { transform: scale(0.97); }
 
 .splash-btn-icon {
-  font-size: 1.2rem;
-  animation: music-bounce 1s ease-in-out infinite alternate;
-}
-@keyframes music-bounce {
-  from { transform: scale(1) rotate(-5deg); }
-  to   { transform: scale(1.2) rotate(5deg); }
+  display: none;
 }
 
 /* Pulse rings around button */
