@@ -390,3 +390,65 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRSVP();
   initReveal();
 });
+
+// ── Music Player (Local Audio) ────────────────────────────────────
+let audio       = null;
+let musicReady  = false;
+let musicOn     = false;
+let firstTouch  = false;
+
+function initAudio() {
+  if (audio) return;
+  audio = document.getElementById('bg-audio');
+  if (!audio) return;
+  audio.volume = 0.6;
+
+  audio.addEventListener('play',  () => setMusicVisual(true));
+  audio.addEventListener('pause', () => setMusicVisual(false));
+  audio.addEventListener('ended', () => setMusicVisual(false));
+  musicReady = true;
+}
+
+function setMusicVisual(playing) {
+  musicOn = playing;
+  const btn = document.getElementById('music-player');
+  if (btn) btn.classList.toggle('playing', playing);
+}
+
+function toggleMusic() {
+  initAudio();
+  if (!musicReady) return;
+  if (musicOn) {
+    audio.pause();
+  } else {
+    audio.play().catch(() => {});
+  }
+}
+
+// Attach click to floating disc button
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('music-player');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMusic();
+    });
+  }
+});
+
+// Auto-start on first user interaction
+function autoStartMusic() {
+  if (firstTouch) return;
+  firstTouch = true;
+  initAudio();
+  if (musicReady) {
+    audio.play().catch(() => {});
+  }
+  document.removeEventListener('click',   autoStartMusic, true);
+  document.removeEventListener('scroll',  autoStartMusic, true);
+  document.removeEventListener('keydown', autoStartMusic, true);
+}
+
+document.addEventListener('click',   autoStartMusic, true);
+document.addEventListener('scroll',  autoStartMusic, true);
+document.addEventListener('keydown', autoStartMusic, true);

@@ -1188,3 +1188,143 @@ input, textarea { font-family: var(--sans); }
   .countdown-grid { gap: 8px; }
   .c-divider { display: none; }
 }
+
+/* ================================================================
+   MUSIC PLAYER — Floating Bottom-Right
+   ================================================================ */
+.music-player {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Disc */
+.music-disc {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--deep-rose), var(--rose-mid), var(--gold));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,0.3),
+    0 0 20px rgba(194,84,122,0.5),
+    0 4px 16px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: none;
+}
+
+.music-disc:hover {
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.5),
+    0 0 30px rgba(212,175,110,0.6),
+    0 6px 24px rgba(0,0,0,0.35);
+  transform: scale(1.08);
+}
+
+.music-disc-inner {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-disc-inner svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Spinning animation when playing */
+@keyframes disc-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.music-player.playing .music-disc {
+  animation: disc-spin 4s linear infinite;
+}
+
+.music-player.playing .music-disc:hover {
+  animation-play-state: paused;
+}
+
+/* Equalizer bars */
+.music-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.music-player.playing .music-bars {
+  opacity: 1;
+}
+
+.music-bars span {
+  display: block;
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to top, var(--rose), var(--gold));
+  animation: none;
+  height: 4px;
+}
+
+@keyframes bar1 { 0%,100%{height:4px} 50%{height:16px} }
+@keyframes bar2 { 0%,100%{height:10px} 33%{height:4px}  66%{height:18px} }
+@keyframes bar3 { 0%,100%{height:16px} 25%{height:6px}  75%{height:12px} }
+@keyframes bar4 { 0%,100%{height:6px}  40%{height:18px} 80%{height:4px} }
+
+.music-player.playing .music-bars span:nth-child(1) { animation: bar1 0.8s ease-in-out infinite; }
+.music-player.playing .music-bars span:nth-child(2) { animation: bar2 0.6s ease-in-out infinite; }
+.music-player.playing .music-bars span:nth-child(3) { animation: bar3 0.9s ease-in-out infinite; }
+.music-player.playing .music-bars span:nth-child(4) { animation: bar4 0.7s ease-in-out infinite; }
+
+/* Label */
+.music-label {
+  font-family: var(--font-body, 'Jost', sans-serif);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.music-player.playing .music-label {
+  color: var(--rose);
+  opacity: 1;
+}
+
+/* Pulse ring when playing */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+.music-player.playing .music-disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--rose);
+  animation: pulse-ring 1.6s ease-out infinite;
+  pointer-events: none;
+}
+
+.music-disc {
+  position: relative;
+}
+
+
