@@ -1367,6 +1367,7 @@ input, textarea { font-family: var(--sans); }
    MUSIC PLAYER — Floating Bottom-Right
    ================================================================ */
 .music-player {
+  display: none !important;
   position: fixed;
   bottom: 28px;
   right: 28px;
