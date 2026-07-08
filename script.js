@@ -490,3 +490,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ── Gift Modal Actions ───────────────────────────────────────────
+function openGiftModal() {
+  const modal = document.getElementById('gift-modal');
+  if (modal) {
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden'; // Lock background scroll
+  }
+}
+
+function closeGiftModal() {
+  const modal = document.getElementById('gift-modal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; // Unlock background scroll
+  }
+}
+

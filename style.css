@@ -1154,10 +1154,12 @@ input, textarea { font-family: var(--sans); }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .nav          { padding: 16px 20px; }
-  .nav.scrolled { padding: 12px 20px; }
-  .nav-links    { gap: var(--gap-sm); }
-  .nav-links a  { font-size: 0.56rem; }
+  .nav          { padding: 12px 20px; }
+  .nav.scrolled { padding: 10px 20px; }
+  .nav-inner    { flex-direction: column; gap: 8px; text-align: center; }
+  .nav-name     { font-size: 0.95rem; margin-bottom: 2px; }
+  .nav-links    { gap: var(--gap-sm); justify-content: center; width: 100%; }
+  .nav-links a  { font-size: 0.58rem; }
 
   .hero-content { padding: 36px 28px 40px; border-radius: var(--r-lg); }
 
@@ -1171,9 +1173,14 @@ input, textarea { font-family: var(--sans); }
 
   .rsvp-choices { grid-template-columns: 1fr; }
 
-  .stats-row { gap: var(--gap-sm); }
-  .stat      { padding: var(--gap-md) var(--gap-md); }
-  .stat-line { width: 32px; height: 1px; }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .stat      { padding: var(--gap-md) 10px; width: 100%; box-sizing: border-box; }
+  .stat:last-child { grid-column: span 2; }
+  .stat-line { display: none !important; }
 
   .form-wrapper { padding: var(--gap-md) var(--gap-sm); }
 
@@ -1501,5 +1508,139 @@ input, textarea { font-family: var(--sans); }
 .music-disc {
   position: relative;
 }
+
+/* ================================================================
+   GIFT MODAL — Premium Overlay & Transitions
+   ================================================================ */
+.gift-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+
+.gift-modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gift-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(90, 16, 48, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gift-modal-content {
+  position: relative;
+  background: rgba(255, 248, 250, 0.98);
+  border: 1px solid rgba(212, 175, 110, 0.35);
+  border-radius: 24px;
+  padding: 3.5rem 2rem 2.5rem;
+  width: 90%;
+  max-width: 780px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 24px 60px rgba(90, 16, 48, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  z-index: 2;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: center;
+}
+
+.gift-modal.show .gift-modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.gift-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s;
+}
+
+.gift-modal-close:hover {
+  color: var(--burgundy);
+  transform: rotate(90deg);
+}
+
+.gift-modal-title {
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--burgundy);
+  margin-bottom: 8px;
+}
+
+.gift-modal-subtitle {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.5;
+}
+
+/* Button to Open Gift Modal */
+.gift-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.8rem;
+  background: linear-gradient(135deg, var(--burgundy), var(--deep-rose));
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 
+    0 8px 24px rgba(123, 27, 62, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.gift-open-btn:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 
+    0 12px 30px rgba(123, 27, 62, 0.45),
+    0 0 0 4px rgba(194, 84, 122, 0.2);
+  background: linear-gradient(135deg, var(--deep-rose), var(--rose-mid));
+}
+
+.gift-open-btn:active {
+  transform: scale(0.98) translateY(0);
+}
+
+/* Mobile Gift Grid Adjustment Inside Modal */
+@media (max-width: 768px) {
+  .gift-modal-content {
+    padding: 3rem 1.2rem 2rem;
+  }
+  .gift-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--gap-md) !important;
+  }
+}
+
 
 
