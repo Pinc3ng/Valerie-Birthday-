@@ -946,11 +946,7 @@ input, textarea { font-family: var(--sans); }
   color: var(--text-muted);
 }
 
-.stat-line {
-  width: 1px;
-  height: 50px;
-  background: rgba(212, 175, 110, 0.30);
-}
+
 
 /* RSVP Choices */
 .rsvp-choices {
@@ -1180,7 +1176,6 @@ input, textarea { font-family: var(--sans); }
   }
   .stat      { padding: var(--gap-md) 10px; width: 100%; box-sizing: border-box; }
   .stat:last-child { grid-column: span 2; }
-  .stat-line { display: none !important; }
 
   .form-wrapper { padding: var(--gap-md) var(--gap-sm); }
 
