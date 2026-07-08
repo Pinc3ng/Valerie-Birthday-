@@ -45,10 +45,9 @@
     <div class="nav-inner">
       <span class="nav-name">Vallerie's Birthday Party</span>
       <div class="nav-links">
-        <a href="#gallery">Gallery</a>
         <a href="#gift">Gift</a>
         <a href="#wishes">Wishes</a>
-        <a href="#rsvp">RSVP</a>
+        <a href="#rsvp">Confirmation</a>
       </div>
     </div>
   </nav>
@@ -125,59 +124,29 @@
     </div>
   </section>
 
-  <!-- ====== GALLERY ====== -->
-  <section class="section gallery-section" id="gallery">
-    <div class="container">
-      <p class="eyebrow">Precious Moments</p>
-      <h2 class="section-heading">Gallery</h2>
-      <p class="section-body">Photos will be shared here after the celebration.</p>
-      <div class="gallery-grid">
-        <div class="g-item ph" id="photo-1">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph tall" id="photo-2">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-3">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph wide" id="photo-4">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-5">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-6">
-          <div class="ph-inner">
-            <span class="ph-icon">✿</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- ====== GIFT ====== -->
   <section class="section gift-section" id="gift">
     <div class="container">
       <p class="eyebrow">Send a Gift</p>
       <h2 class="section-heading">Gift Registry</h2>
-      <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, the details below are available for your convenience.</p>
+      <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, click the button below to view the registry details.</p>
+      <div style="margin-top: var(--gap-md);">
+        <button class="gift-open-btn" onclick="openGiftModal()" id="btn-open-gift">
+          <span>Send a Gift &nbsp;🎁</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== GIFT MODAL ====== -->
+  <div class="gift-modal" id="gift-modal" aria-hidden="true">
+    <div class="gift-modal-overlay" onclick="closeGiftModal()"></div>
+    <div class="gift-modal-content">
+      <button class="gift-modal-close" onclick="closeGiftModal()" aria-label="Close modal">×</button>
+      <h3 class="gift-modal-title">Gift Registry Details</h3>
+      <p class="gift-modal-subtitle">Your wishes and blessings are more than enough. But if you wish to send a gift, the details are below. Thank you! 🌸</p>
+      
       <div class="gift-grid">
         <div class="gift-card" id="gift-card-bca">
           <div class="gift-bank-icon">🏦</div>
@@ -211,7 +180,7 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ====== WISHES ====== -->
   <section class="section wishes-section" id="wishes">
@@ -244,7 +213,7 @@
   <section class="section rsvp-section" id="rsvp">
     <div class="container">
       <p class="eyebrow">Kindly Reply</p>
-      <h2 class="section-heading">RSVP</h2>
+      <h2 class="section-heading">Attendance Confirmation</h2>
       <p class="section-body">We warmly look forward to celebrating with you. Please confirm your attendance below.</p>
 
       <!-- Stats -->
