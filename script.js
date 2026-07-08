@@ -431,20 +431,29 @@ function toggleMusic() {
 // Coba autoplay langsung saat halaman siap
 document.addEventListener('DOMContentLoaded', () => {
   initAudio();
-  // Coba play langsung (works di Netlify/HTTPS jika user sudah pernah visit)
-  if (audio) {
-    audio.play().then(() => {
-      started = true;
-    }).catch(() => {
-      // Browser blokir autoplay — play saat interaksi pertama
-      document.addEventListener('click',   startMusic, { once: true, capture: true });
-      document.addEventListener('scroll',  startMusic, { once: true, capture: true });
-      document.addEventListener('keydown', startMusic, { once: true, capture: true });
-      document.addEventListener('touchstart', startMusic, { once: true, capture: true });
+
+  // ── Splash Screen ──────────────────────────────────────────────
+  const splash      = document.getElementById('splash');
+  const splashBtn   = document.getElementById('splash-enter');
+
+  function dismissSplash() {
+    if (!splash) return;
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 650);
+    // Start music immediately on button click
+    started = true;
+    if (audio) audio.play().catch(() => {});
+  }
+
+  if (splashBtn) splashBtn.addEventListener('click', dismissSplash);
+  // Also dismiss if user somehow clicks outside card
+  if (splash) {
+    splash.addEventListener('click', (e) => {
+      if (e.target === splash) dismissSplash();
     });
   }
 
-  // Tombol disc toggle play/pause
+  // ── Tombol disc toggle play/pause ──────────────────────────────
   const btn = document.getElementById('music-player');
   if (btn) {
     btn.addEventListener('click', (e) => {

@@ -1190,6 +1190,185 @@ input, textarea { font-family: var(--sans); }
 }
 
 /* ================================================================
+   SPLASH SCREEN — Full-page Intro Overlay
+   ================================================================ */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.splash-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(253,224,239,0.95) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(212,175,110,0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #fef0f5 0%, #fce4ef 40%, #f5bfd4 100%);
+  backdrop-filter: blur(0px);
+}
+
+/* Floating petals */
+.splash-petals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.splash-petals span {
+  position: absolute;
+  font-size: 1.8rem;
+  animation: petal-float 6s ease-in-out infinite;
+  opacity: 0.7;
+}
+.splash-petals span:nth-child(1) { top: 8%;  left: 10%; animation-delay: 0s;    font-size: 2rem; }
+.splash-petals span:nth-child(2) { top: 15%; right: 12%; animation-delay: 1s;  font-size: 1.4rem; }
+.splash-petals span:nth-child(3) { top: 70%; left: 8%;  animation-delay: 2s;   font-size: 1.6rem; }
+.splash-petals span:nth-child(4) { top: 80%; right: 10%; animation-delay: 0.5s; font-size: 1.2rem; }
+.splash-petals span:nth-child(5) { top: 45%; left: 5%;  animation-delay: 3s;   font-size: 1rem; }
+.splash-petals span:nth-child(6) { top: 30%; right: 6%; animation-delay: 1.5s; font-size: 2.2rem; }
+
+@keyframes petal-float {
+  0%, 100% { transform: translateY(0) rotate(0deg);   opacity: 0.5; }
+  33%       { transform: translateY(-18px) rotate(8deg); opacity: 0.8; }
+  66%       { transform: translateY(10px) rotate(-5deg); opacity: 0.6; }
+}
+
+/* Card */
+.splash-content {
+  position: relative;
+  text-align: center;
+  padding: 3rem 2.5rem 2.5rem;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 28px;
+  box-shadow:
+    0 8px 40px rgba(194,84,122,0.15),
+    0 2px 12px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  max-width: 420px;
+  width: 90%;
+  animation: splash-card-in 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes splash-card-in {
+  from { opacity: 0; transform: scale(0.85) translateY(30px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.splash-pre {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--rose-mid);
+  margin-bottom: 0.75rem;
+}
+
+.splash-name {
+  font-family: 'Dancing Script', cursive;
+  font-size: clamp(2.2rem, 6vw, 3rem);
+  font-weight: 700;
+  color: var(--deep-rose);
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+  text-shadow: 0 2px 12px rgba(154,48,96,0.15);
+}
+.splash-name span {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 0.25rem;
+}
+
+.splash-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+/* CTA Button */
+.splash-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.9rem 2.2rem;
+  background: linear-gradient(135deg, var(--deep-rose), var(--rose-mid));
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  overflow: visible;
+  box-shadow:
+    0 4px 20px rgba(154,48,96,0.4),
+    0 1px 4px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.splash-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 28px rgba(154,48,96,0.5);
+}
+.splash-btn:active { transform: scale(0.97); }
+
+.splash-btn-icon {
+  font-size: 1.2rem;
+  animation: music-bounce 1s ease-in-out infinite alternate;
+}
+@keyframes music-bounce {
+  from { transform: scale(1) rotate(-5deg); }
+  to   { transform: scale(1.2) rotate(5deg); }
+}
+
+/* Pulse rings around button */
+.splash-btn-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50px;
+  border: 2px solid rgba(194,84,122,0.5);
+  animation: btn-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes btn-pulse {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.splash-hint {
+  margin-top: 1.2rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+/* Fade-out animation when dismissed */
+.splash.hide {
+  animation: splash-out 0.6s ease-in-out forwards;
+  pointer-events: none;
+}
+@keyframes splash-out {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* ================================================================
    MUSIC PLAYER — Floating Bottom-Right
    ================================================================ */
 .music-player {
