@@ -1,6 +1,6 @@
 /* ================================================================
    VALLERIE VALENCIA — SWEET SEVENTEEN
-   JavaScript: Countdown · Canvas Particles · Wishes · RSVP · Copy
+   JavaScript: Countdown · Sparkle Particles · Wishes · RSVP · Copy
    ================================================================ */
 
 'use strict';
@@ -46,11 +46,11 @@ function setNum(id, val) {
   const el = document.getElementById(id);
   if (!el || el.textContent === val) return;
   el.style.transition = 'none';
-  el.style.opacity = '0.3';
-  el.style.transform = 'translateY(-6px)';
+  el.style.opacity = '0.2';
+  el.style.transform = 'translateY(-8px)';
   requestAnimationFrame(() => {
     el.textContent = val;
-    el.style.transition = 'opacity 0.25s, transform 0.25s';
+    el.style.transition = 'opacity 0.28s, transform 0.28s';
     el.style.opacity = '1';
     el.style.transform = 'translateY(0)';
   });
@@ -59,7 +59,7 @@ function setNum(id, val) {
 setInterval(tick, 1000);
 tick();
 
-// ── Canvas Particles ───────────────────────────────────────────────
+// ── Canvas Sparkle / Glitter Particles ────────────────────────────
 (function initCanvas() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
@@ -73,40 +73,91 @@ tick();
   resize();
   window.addEventListener('resize', resize);
 
-  // Subtle gold dust particles
-  const GOLD  = [196, 169, 106];
-  const ROSE  = [154, 80, 96];
+  // Pink marble sparkle palette
+  const COLORS = [
+    [212, 175, 110],   // gold
+    [232, 204, 144],   // light gold
+    [201, 150, 122],   // rose gold
+    [245, 191, 212],   // light pink
+    [232, 160, 188],   // pink
+    [255, 220, 235],   // pale pink
+    [194,  84, 122],   // rose
+  ];
+
+  // Draw a 4-pointed sparkle star
+  function drawSparkle(x, y, r, alpha, color) {
+    const [cr, cg, cb] = color;
+    const style = `rgba(${cr},${cg},${cb},${alpha})`;
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Thin cross beams
+    ctx.strokeStyle = style;
+    ctx.lineWidth = r * 0.55;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 2.2); ctx.lineTo(0, r * 2.2);
+    ctx.moveTo(-r * 2.2, 0); ctx.lineTo(r * 2.2, 0);
+    ctx.stroke();
+
+    // Diagonal shorter beams
+    ctx.lineWidth = r * 0.30;
+    ctx.beginPath();
+    ctx.moveTo(-r * 1.2, -r * 1.2); ctx.lineTo(r * 1.2, r * 1.2);
+    ctx.moveTo( r * 1.2, -r * 1.2); ctx.lineTo(-r * 1.2, r * 1.2);
+    ctx.stroke();
+
+    // Center bright dot
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${Math.min(cr+40,255)},${Math.min(cg+40,255)},${Math.min(cb+40,255)},${alpha})`;
+    ctx.fill();
+
+    ctx.restore();
+  }
 
   class Dot {
     constructor() { this.reset(true); }
     reset(initial = false) {
-      this.x  = Math.random() * W;
-      this.y  = initial ? Math.random() * H : H + 10;
-      this.r  = Math.random() * 1.5 + 0.3;
-      this.vy = -(Math.random() * 0.4 + 0.1);
-      this.vx = (Math.random() - 0.5) * 0.2;
-      this.life = 0;
-      this.maxLife = Math.random() * 300 + 200;
-      this.c = Math.random() > 0.6 ? ROSE : GOLD;
+      this.x       = Math.random() * W;
+      this.y       = initial ? Math.random() * H : H + 10;
+      this.r       = Math.random() * 1.6 + 0.4;
+      this.vy      = -(Math.random() * 0.45 + 0.08);
+      this.vx      = (Math.random() - 0.5) * 0.28;
+      this.life    = 0;
+      this.maxLife = Math.random() * 280 + 160;
+      this.phase   = Math.random() * Math.PI * 2;
+      this.spin    = (Math.random() - 0.5) * 0.04;
+      this.c       = COLORS[Math.floor(Math.random() * COLORS.length)];
+      // 40% sparkle stars, 60% soft dots
+      this.type    = Math.random() > 0.60 ? 'star' : 'dot';
     }
     update() {
       this.x += this.vx;
       this.y += this.vy;
       this.life++;
+      this.phase += 0.065;
       if (this.y < -10 || this.life > this.maxLife) this.reset();
     }
     draw() {
       const progress = this.life / this.maxLife;
-      const alpha = Math.sin(progress * Math.PI) * 0.4;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${this.c[0]},${this.c[1]},${this.c[2]},${alpha})`;
-      ctx.fill();
+      const twinkle  = 0.55 + 0.45 * Math.sin(this.phase);
+      const alpha    = Math.sin(progress * Math.PI) * 0.70 * twinkle;
+
+      if (this.type === 'star') {
+        drawSparkle(this.x, this.y, this.r, alpha, this.c);
+      } else {
+        const [cr, cg, cb] = this.c;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.fill();
+      }
     }
   }
 
-  // Create initial pool
-  for (let i = 0; i < 60; i++) particles.push(new Dot());
+  // Create particle pool
+  for (let i = 0; i < 90; i++) particles.push(new Dot());
 
   function loop() {
     ctx.clearRect(0, 0, W, H);
@@ -132,11 +183,11 @@ function initReveal() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry, i) => {
       if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('in'), i * 60);
+        setTimeout(() => entry.target.classList.add('in'), i * 70);
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.10 });
 
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
@@ -170,7 +221,7 @@ function copyAccount(bank) {
   copy(text).then(() => {
     if (!copiedEl) return;
     copiedEl.classList.add('show');
-    setTimeout(() => copiedEl.classList.remove('show'), 2000);
+    setTimeout(() => copiedEl.classList.remove('show'), 2200);
   });
 }
 
@@ -226,14 +277,15 @@ function submitWish(e) {
 
   nameEl.value = '';
   msgEl.value  = '';
-  document.getElementById('char-count').textContent = '0 / 300';
+  const cc = document.getElementById('char-count');
+  if (cc) cc.textContent = '0 / 300';
 
-  btn.textContent = 'Sent';
+  btn.textContent = 'Sent ✓';
   btn.disabled    = true;
   setTimeout(() => {
-    btn.textContent = 'Send Wishes';
+    btn.textContent = 'Send Wishes ✦';
     btn.disabled    = false;
-  }, 2000);
+  }, 2200);
 
   renderWishes();
 }
@@ -310,7 +362,7 @@ function submitRSVP(e) {
   const list = load(KEY_RSVP);
   const idx  = list.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
   if (idx !== -1) {
-    list[idx].status = status;
+    list[idx].status    = status;
     list[idx].timestamp = Date.now();
   } else {
     list.push({ name, status, timestamp: Date.now() });
@@ -320,12 +372,12 @@ function submitRSVP(e) {
   nameEl.value = '';
   document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
 
-  btn.textContent = 'Confirmed';
+  btn.textContent = 'Confirmed ✓';
   btn.disabled    = true;
   setTimeout(() => {
-    btn.textContent = 'Confirm';
+    btn.textContent = 'Confirm ✦';
     btn.disabled    = false;
-  }, 2000);
+  }, 2200);
 
   updateStats();
   renderRSVP();

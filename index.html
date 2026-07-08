@@ -7,13 +7,19 @@
   <meta name="description" content="An intimate celebration of Vallerie Valencia's seventeenth birthday. October 24, 2026 · Chloe W Villa." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Canvas for subtle particle effect -->
+  <!-- Canvas for sparkle / glitter effect -->
   <canvas id="canvas" aria-hidden="true"></canvas>
+
+  <!-- Decorative corner orbs (match poster corners) -->
+  <div class="orb orb-tl" aria-hidden="true"></div>
+  <div class="orb orb-tr" aria-hidden="true"></div>
+  <div class="orb orb-bl" aria-hidden="true"></div>
+  <div class="orb orb-br" aria-hidden="true"></div>
 
   <!-- ====== NAV ====== -->
   <nav class="nav" id="nav">
@@ -33,9 +39,15 @@
     <div class="hero-content">
       <p class="hero-pre">You Are Cordially Invited</p>
       <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
-      <h1 class="hero-title">Vallerie's<br><em>Birthday Party</em></h1>
+
+      <h1 class="hero-title">
+        <span class="hero-name">Vallerie's</span>
+        <span class="hero-event">Birthday Party</span>
+      </h1>
+
       <p class="hero-sub">Sweet Seventeen</p>
       <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
+
       <div class="hero-meta">
         <div class="hero-meta-item">
           <span class="meta-label">Date</span>
@@ -57,6 +69,7 @@
           <span class="meta-value">All White</span>
         </div>
       </div>
+
       <a href="#rsvp" class="hero-btn">Confirm Attendance</a>
     </div>
     <div class="hero-scroll" aria-hidden="true">
@@ -102,37 +115,37 @@
       <div class="gallery-grid">
         <div class="g-item ph" id="photo-1">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
         <div class="g-item ph tall" id="photo-2">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
         <div class="g-item ph" id="photo-3">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
         <div class="g-item ph wide" id="photo-4">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
         <div class="g-item ph" id="photo-5">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
         <div class="g-item ph" id="photo-6">
           <div class="ph-inner">
-            <span class="ph-icon">◻</span>
+            <span class="ph-icon">✿</span>
             <span class="ph-text">Photo Coming Soon</span>
           </div>
         </div>
@@ -148,31 +161,34 @@
       <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, the details below are available for your convenience.</p>
       <div class="gift-grid">
         <div class="gift-card" id="gift-card-bca">
+          <div class="gift-bank-icon">🏦</div>
           <p class="gift-bank">Bank BCA</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="bca-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('bca')" id="btn-bca">Copy Account Number</button>
-          <span class="gift-copied" id="copied-bca">Copied</span>
+          <span class="gift-copied" id="copied-bca">Copied ✓</span>
         </div>
         <div class="gift-card" id="gift-card-mandiri">
+          <div class="gift-bank-icon">🏦</div>
           <p class="gift-bank">Bank Mandiri</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="mandiri-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('mandiri')" id="btn-mandiri">Copy Account Number</button>
-          <span class="gift-copied" id="copied-mandiri">Copied</span>
+          <span class="gift-copied" id="copied-mandiri">Copied ✓</span>
         </div>
         <div class="gift-card" id="gift-card-gopay">
+          <div class="gift-bank-icon">💚</div>
           <p class="gift-bank">GoPay · DANA</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="gopay-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('gopay')" id="btn-gopay">Copy Number</button>
-          <span class="gift-copied" id="copied-gopay">Copied</span>
+          <span class="gift-copied" id="copied-gopay">Copied ✓</span>
         </div>
       </div>
     </div>
@@ -196,7 +212,7 @@
             <textarea id="wish-message" placeholder="Write your wishes here..." required maxlength="300" rows="4"></textarea>
             <span class="field-count" id="char-count">0 / 300</span>
           </div>
-          <button type="submit" class="form-btn" id="submit-wish">Send Wishes</button>
+          <button type="submit" class="form-btn" id="submit-wish">Send Wishes ✦</button>
         </form>
       </div>
 
@@ -256,7 +272,7 @@
               </label>
             </div>
           </div>
-          <button type="submit" class="form-btn" id="submit-rsvp">Confirm</button>
+          <button type="submit" class="form-btn" id="submit-rsvp">Confirm ✦</button>
         </form>
       </div>
 
