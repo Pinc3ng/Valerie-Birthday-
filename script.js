@@ -392,21 +392,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Music Player (Local Audio) ────────────────────────────────────
-let audio       = null;
-let musicReady  = false;
-let musicOn     = false;
-let firstTouch  = false;
+let audio      = null;
+let musicOn    = false;
+let started    = false;
 
 function initAudio() {
   if (audio) return;
   audio = document.getElementById('bg-audio');
   if (!audio) return;
   audio.volume = 0.6;
-
   audio.addEventListener('play',  () => setMusicVisual(true));
   audio.addEventListener('pause', () => setMusicVisual(false));
-  audio.addEventListener('ended', () => setMusicVisual(false));
-  musicReady = true;
 }
 
 function setMusicVisual(playing) {
@@ -415,9 +411,16 @@ function setMusicVisual(playing) {
   if (btn) btn.classList.toggle('playing', playing);
 }
 
+function startMusic() {
+  if (started) return;
+  started = true;
+  initAudio();
+  if (audio) audio.play().catch(() => {});
+}
+
 function toggleMusic() {
   initAudio();
-  if (!musicReady) return;
+  if (!audio) return;
   if (musicOn) {
     audio.pause();
   } else {
@@ -425,30 +428,29 @@ function toggleMusic() {
   }
 }
 
-// Attach click to floating disc button
+// Coba autoplay langsung saat halaman siap
 document.addEventListener('DOMContentLoaded', () => {
+  initAudio();
+  // Coba play langsung (works di Netlify/HTTPS jika user sudah pernah visit)
+  if (audio) {
+    audio.play().then(() => {
+      started = true;
+    }).catch(() => {
+      // Browser blokir autoplay — play saat interaksi pertama
+      document.addEventListener('click',   startMusic, { once: true, capture: true });
+      document.addEventListener('scroll',  startMusic, { once: true, capture: true });
+      document.addEventListener('keydown', startMusic, { once: true, capture: true });
+      document.addEventListener('touchstart', startMusic, { once: true, capture: true });
+    });
+  }
+
+  // Tombol disc toggle play/pause
   const btn = document.getElementById('music-player');
   if (btn) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      started = true;
       toggleMusic();
     });
   }
 });
-
-// Auto-start on first user interaction
-function autoStartMusic() {
-  if (firstTouch) return;
-  firstTouch = true;
-  initAudio();
-  if (musicReady) {
-    audio.play().catch(() => {});
-  }
-  document.removeEventListener('click',   autoStartMusic, true);
-  document.removeEventListener('scroll',  autoStartMusic, true);
-  document.removeEventListener('keydown', autoStartMusic, true);
-}
-
-document.addEventListener('click',   autoStartMusic, true);
-document.addEventListener('scroll',  autoStartMusic, true);
-document.addEventListener('keydown', autoStartMusic, true);
