@@ -5,26 +5,12 @@
 
 'use strict';
 
-// ── Supabase Configuration ─────────────────────────────────────────
-// Put your Supabase project URL and anon/public API Key here:
-const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ── Storage ────────────────────────────────────────────────────────
+const KEY_WISHES = 'vv_wishes_v2';
+const KEY_RSVP   = 'vv_rsvp_v2';
 
-async function supabaseFetch(path, options = {}) {
-  const url = `${SUPABASE_URL}/rest/v1/${path}`;
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-  const res = await fetch(url, { ...options, headers });
-  if (!res.ok) {
-    throw new Error(`Supabase error: ${res.statusText}`);
-  }
-  if (res.status === 204) return null;
-  return res.json();
-}
+const load = (key) => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } };
+const save = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} };
 
 // ── XSS ────────────────────────────────────────────────────────────
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -247,38 +233,34 @@ function fmtDate(ts) {
 }
 
 // ── Wishes ────────────────────────────────────────────────────────
-async function loadWishes() {
+function renderWishes() {
+  const wishes  = load(KEY_WISHES);
   const display = document.getElementById('wishes-display');
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  try {
-    const wishes = await supabaseFetch('wishes?select=*&order=created_at.desc');
-    display.innerHTML = '';
+  display.innerHTML = '';
 
-    if (!wishes || wishes.length === 0) {
-      if (empty) empty.style.display = 'block';
-      return;
-    }
-    if (empty) empty.style.display = 'none';
-
-    wishes.forEach((w, i) => {
-      const card = document.createElement('div');
-      card.className = 'wish-card';
-      card.style.animationDelay = (i * 0.07) + 's';
-      card.innerHTML = `
-        <p class="wish-card-name">${esc(w.name)}</p>
-        <p class="wish-card-text">${esc(w.message)}</p>
-        <p class="wish-card-time">${fmtDate(w.created_at)}</p>
-      `;
-      display.appendChild(card);
-    });
-  } catch (err) {
-    console.error('Error loading wishes:', err);
+  if (wishes.length === 0) {
+    if (empty) empty.style.display = 'block';
+    return;
   }
+  if (empty) empty.style.display = 'none';
+
+  [...wishes].reverse().forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = 'wish-card';
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.innerHTML = `
+      <p class="wish-card-name">${esc(w.name)}</p>
+      <p class="wish-card-text">${esc(w.message)}</p>
+      <p class="wish-card-time">${fmtDate(w.timestamp)}</p>
+    `;
+    display.appendChild(card);
+  });
 }
 
-async function submitWish(e) {
+function submitWish(e) {
   e.preventDefault();
   const nameEl = document.getElementById('wish-name');
   const msgEl  = document.getElementById('wish-message');
@@ -289,35 +271,23 @@ async function submitWish(e) {
   const message = msgEl.value.trim();
   if (!name || !message) return;
 
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
+  const wishes = load(KEY_WISHES);
+  wishes.push({ name, message, timestamp: Date.now() });
+  save(KEY_WISHES, wishes);
 
-  try {
-    await supabaseFetch('wishes', {
-      method: 'POST',
-      body: JSON.stringify({ name, message })
-    });
+  nameEl.value = '';
+  msgEl.value  = '';
+  const cc = document.getElementById('char-count');
+  if (cc) cc.textContent = '0 / 300';
 
-    nameEl.value = '';
-    msgEl.value  = '';
-    const cc = document.getElementById('char-count');
-    if (cc) cc.textContent = '0 / 300';
+  btn.textContent = 'Sent ✓';
+  btn.disabled    = true;
+  setTimeout(() => {
+    btn.textContent = 'Send Wishes ✦';
+    btn.disabled    = false;
+  }, 2200);
 
-    btn.textContent = 'Sent ✓';
-    setTimeout(() => {
-      btn.textContent = 'Send Wishes ✦';
-      btn.disabled    = false;
-    }, 2200);
-
-    loadWishes();
-  } catch (err) {
-    console.error('Error sending wish:', err);
-    btn.textContent = 'Failed ✘';
-    setTimeout(() => {
-      btn.textContent = 'Send Wishes ✦';
-      btn.disabled    = false;
-    }, 2200);
-  }
+  renderWishes();
 }
 
 // Char counter
@@ -330,6 +300,15 @@ if (wishMsg && charEl) {
 }
 
 // ── RSVP ──────────────────────────────────────────────────────────
+function updateStats() {
+  const list  = load(KEY_RSVP);
+  const hadir = list.filter(r => r.status === 'hadir').length;
+  const tidak = list.filter(r => r.status === 'tidak').length;
+  animCount('count-hadir', hadir);
+  animCount('count-tidak', tidak);
+  animCount('count-total', list.length);
+}
+
 function animCount(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -344,45 +323,32 @@ function animCount(id, target) {
   }, 40);
 }
 
-async function loadRSVP() {
+function renderRSVP() {
+  const list    = load(KEY_RSVP);
   const listEl  = document.getElementById('rsvp-list');
   const emptyEl = document.getElementById('rsvp-empty');
-  
-  try {
-    const list = await supabaseFetch('rsvp?select=*&order=created_at.desc');
-    
-    // Update stats
-    const hadir = list.filter(r => r.status === 'hadir').length;
-    const tidak = list.filter(r => r.status === 'tidak').length;
-    animCount('count-hadir', hadir);
-    animCount('count-tidak', tidak);
-    animCount('count-total', list.length);
+  if (!listEl) return;
 
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    
-    if (!list || list.length === 0) {
-      if (emptyEl) emptyEl.style.display = 'block';
-      return;
-    }
-    if (emptyEl) emptyEl.style.display = 'none';
-
-    list.forEach((r, i) => {
-      const row = document.createElement('div');
-      row.className = 'guest-entry';
-      row.style.animationDelay = (i * 0.05) + 's';
-      row.innerHTML = `
-        <span class="guest-entry-name">${esc(r.name)}</span>
-        <span class="guest-entry-status ${r.status}">${r.status === 'hadir' ? 'Attending' : 'Not Attending'}</span>
-      `;
-      listEl.appendChild(row);
-    });
-  } catch (err) {
-    console.error('Error loading RSVP:', err);
+  listEl.innerHTML = '';
+  if (list.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
   }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  [...list].reverse().forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'guest-entry';
+    row.style.animationDelay = (i * 0.05) + 's';
+    row.innerHTML = `
+      <span class="guest-entry-name">${esc(r.name)}</span>
+      <span class="guest-entry-status ${r.status}">${r.status === 'hadir' ? 'Attending' : 'Not Attending'}</span>
+    `;
+    listEl.appendChild(row);
+  });
 }
 
-async function submitRSVP(e) {
+function submitRSVP(e) {
   e.preventDefault();
   const nameEl   = document.getElementById('rsvp-name');
   const statusEl = document.querySelector('input[name="rsvp-status"]:checked');
@@ -393,52 +359,35 @@ async function submitRSVP(e) {
   const status = statusEl.value;
   if (!name) return;
 
-  btn.disabled = true;
-  btn.textContent = 'Confirming...';
-
-  try {
-    // Check if name already exists in database (case-insensitive check)
-    const existing = await supabaseFetch(`rsvp?name=ilike.${encodeURIComponent(name)}&select=*`);
-    
-    if (existing && existing.length > 0) {
-      // Update existing record
-      const recordId = existing[0].id;
-      await supabaseFetch(`rsvp?id=eq.${recordId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status, created_at: new Date().toISOString() })
-      });
-    } else {
-      // Insert new record
-      await supabaseFetch('rsvp', {
-        method: 'POST',
-        body: JSON.stringify({ name, status })
-      });
-    }
-
-    nameEl.value = '';
-    document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
-
-    btn.textContent = 'Confirmed ✓';
-    setTimeout(() => {
-      btn.textContent = 'Confirm ✦';
-      btn.disabled    = false;
-    }, 2200);
-
-    loadRSVP();
-  } catch (err) {
-    console.error('Error submitting RSVP:', err);
-    btn.textContent = 'Failed ✘';
-    setTimeout(() => {
-      btn.textContent = 'Confirm ✦';
-      btn.disabled    = false;
-    }, 2200);
+  const list = load(KEY_RSVP);
+  const idx  = list.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
+  if (idx !== -1) {
+    list[idx].status    = status;
+    list[idx].timestamp = Date.now();
+  } else {
+    list.push({ name, status, timestamp: Date.now() });
   }
+  save(KEY_RSVP, list);
+
+  nameEl.value = '';
+  document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
+
+  btn.textContent = 'Confirmed ✓';
+  btn.disabled    = true;
+  setTimeout(() => {
+    btn.textContent = 'Confirm ✦';
+    btn.disabled    = false;
+  }, 2200);
+
+  updateStats();
+  renderRSVP();
 }
 
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  loadWishes();
-  loadRSVP();
+  renderWishes();
+  updateStats();
+  renderRSVP();
   initReveal();
 });
 
