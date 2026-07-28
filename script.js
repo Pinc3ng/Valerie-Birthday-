@@ -1,16 +1,14 @@
 /* ================================================================
    VALLERIE VALENCIA — SWEET SEVENTEEN
-   JavaScript: Countdown · Canvas Particles · Wishes · RSVP · Copy
+   JavaScript: Countdown · Sparkle Particles · Wishes · RSVP · Copy
    ================================================================ */
 
 'use strict';
 
-// ── 🔥 Firebase Config ─────────────────────────────────────────────
-// GANTI URL ini dengan Firebase Realtime Database URL kamu!
-// Contoh: 'https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+// ── 🔥 Firebase Config ──────────────────────────────────────────────────
 const FIREBASE_URL = 'https://web-app-demo-vincent-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-// ── Firebase REST Helpers ──────────────────────────────────────────
+// Firebase REST Helpers
 async function fbGet(path) {
   try {
     const res  = await fetch(`${FIREBASE_URL}/${path}.json`);
@@ -18,38 +16,25 @@ async function fbGet(path) {
     return data;
   } catch { return null; }
 }
-
 async function fbPost(path, data) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
     });
     return await res.json();
   } catch { return null; }
 }
-
 async function fbPatch(path, data) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
     });
     return await res.json();
   } catch { return null; }
 }
-
-// Convert Firebase object { key: {…}, key2: {…} } → array
 function fbToArray(obj) {
   if (!obj) return [];
   return Object.entries(obj).map(([key, val]) => ({ _key: key, ...val }));
-}
-
-// Firebase ready check
-function isFirebaseReady() {
-  return FIREBASE_URL && FIREBASE_URL !== 'PASTE_FIREBASE_URL_KAMU_DISINI';
 }
 
 // ── XSS ────────────────────────────────────────────────────────────
@@ -86,11 +71,11 @@ function setNum(id, val) {
   const el = document.getElementById(id);
   if (!el || el.textContent === val) return;
   el.style.transition = 'none';
-  el.style.opacity = '0.3';
-  el.style.transform = 'translateY(-6px)';
+  el.style.opacity = '0.2';
+  el.style.transform = 'translateY(-8px)';
   requestAnimationFrame(() => {
     el.textContent = val;
-    el.style.transition = 'opacity 0.25s, transform 0.25s';
+    el.style.transition = 'opacity 0.28s, transform 0.28s';
     el.style.opacity = '1';
     el.style.transform = 'translateY(0)';
   });
@@ -99,7 +84,7 @@ function setNum(id, val) {
 setInterval(tick, 1000);
 tick();
 
-// ── Canvas Particles ───────────────────────────────────────────────
+// ── Canvas Sparkle / Glitter Particles ────────────────────────────
 (function initCanvas() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
@@ -113,40 +98,91 @@ tick();
   resize();
   window.addEventListener('resize', resize);
 
-  // Subtle gold dust particles
-  const GOLD  = [196, 169, 106];
-  const ROSE  = [154, 80, 96];
+  // Pink marble sparkle palette
+  const COLORS = [
+    [212, 175, 110],   // gold
+    [232, 204, 144],   // light gold
+    [201, 150, 122],   // rose gold
+    [245, 191, 212],   // light pink
+    [232, 160, 188],   // pink
+    [255, 220, 235],   // pale pink
+    [194,  84, 122],   // rose
+  ];
+
+  // Draw a 4-pointed sparkle star
+  function drawSparkle(x, y, r, alpha, color) {
+    const [cr, cg, cb] = color;
+    const style = `rgba(${cr},${cg},${cb},${alpha})`;
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Thin cross beams
+    ctx.strokeStyle = style;
+    ctx.lineWidth = r * 0.55;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 2.2); ctx.lineTo(0, r * 2.2);
+    ctx.moveTo(-r * 2.2, 0); ctx.lineTo(r * 2.2, 0);
+    ctx.stroke();
+
+    // Diagonal shorter beams
+    ctx.lineWidth = r * 0.30;
+    ctx.beginPath();
+    ctx.moveTo(-r * 1.2, -r * 1.2); ctx.lineTo(r * 1.2, r * 1.2);
+    ctx.moveTo( r * 1.2, -r * 1.2); ctx.lineTo(-r * 1.2, r * 1.2);
+    ctx.stroke();
+
+    // Center bright dot
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${Math.min(cr+40,255)},${Math.min(cg+40,255)},${Math.min(cb+40,255)},${alpha})`;
+    ctx.fill();
+
+    ctx.restore();
+  }
 
   class Dot {
     constructor() { this.reset(true); }
     reset(initial = false) {
-      this.x  = Math.random() * W;
-      this.y  = initial ? Math.random() * H : H + 10;
-      this.r  = Math.random() * 1.5 + 0.3;
-      this.vy = -(Math.random() * 0.4 + 0.1);
-      this.vx = (Math.random() - 0.5) * 0.2;
-      this.life = 0;
-      this.maxLife = Math.random() * 300 + 200;
-      this.c = Math.random() > 0.6 ? ROSE : GOLD;
+      this.x       = Math.random() * W;
+      this.y       = initial ? Math.random() * H : H + 10;
+      this.r       = Math.random() * 1.6 + 0.4;
+      this.vy      = -(Math.random() * 0.45 + 0.08);
+      this.vx      = (Math.random() - 0.5) * 0.28;
+      this.life    = 0;
+      this.maxLife = Math.random() * 280 + 160;
+      this.phase   = Math.random() * Math.PI * 2;
+      this.spin    = (Math.random() - 0.5) * 0.04;
+      this.c       = COLORS[Math.floor(Math.random() * COLORS.length)];
+      // 40% sparkle stars, 60% soft dots
+      this.type    = Math.random() > 0.60 ? 'star' : 'dot';
     }
     update() {
       this.x += this.vx;
       this.y += this.vy;
       this.life++;
+      this.phase += 0.065;
       if (this.y < -10 || this.life > this.maxLife) this.reset();
     }
     draw() {
       const progress = this.life / this.maxLife;
-      const alpha = Math.sin(progress * Math.PI) * 0.4;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${this.c[0]},${this.c[1]},${this.c[2]},${alpha})`;
-      ctx.fill();
+      const twinkle  = 0.55 + 0.45 * Math.sin(this.phase);
+      const alpha    = Math.sin(progress * Math.PI) * 0.70 * twinkle;
+
+      if (this.type === 'star') {
+        drawSparkle(this.x, this.y, this.r, alpha, this.c);
+      } else {
+        const [cr, cg, cb] = this.c;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.fill();
+      }
     }
   }
 
-  // Create initial pool
-  for (let i = 0; i < 60; i++) particles.push(new Dot());
+  // Create particle pool
+  for (let i = 0; i < 90; i++) particles.push(new Dot());
 
   function loop() {
     ctx.clearRect(0, 0, W, H);
@@ -172,11 +208,11 @@ function initReveal() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry, i) => {
       if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('in'), i * 60);
+        setTimeout(() => entry.target.classList.add('in'), i * 70);
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.10 });
 
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
@@ -210,7 +246,7 @@ function copyAccount(bank) {
   copy(text).then(() => {
     if (!copiedEl) return;
     copiedEl.classList.add('show');
-    setTimeout(() => copiedEl.classList.remove('show'), 2000);
+    setTimeout(() => copiedEl.classList.remove('show'), 2200);
   });
 }
 
@@ -227,17 +263,10 @@ async function renderWishes() {
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  if (!isFirebaseReady()) {
-    display.innerHTML = '<p style="text-align:center;opacity:0.5;padding:2rem;">⚙️ Firebase belum dikonfigurasi.</p>';
-    if (empty) empty.style.display = 'none';
-    return;
-  }
-
   const raw    = await fbGet('wishes');
   const wishes = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
 
   display.innerHTML = '';
-
   if (wishes.length === 0) {
     if (empty) empty.style.display = 'block';
     return;
@@ -268,11 +297,6 @@ async function submitWish(e) {
   const message = msgEl.value.trim();
   if (!name || !message) return;
 
-  if (!isFirebaseReady()) {
-    alert('Firebase belum dikonfigurasi. Hubungi pengelola website.');
-    return;
-  }
-
   btn.textContent = 'Sending...';
   btn.disabled    = true;
 
@@ -280,14 +304,14 @@ async function submitWish(e) {
 
   nameEl.value = '';
   msgEl.value  = '';
-  const charCount = document.getElementById('char-count');
-  if (charCount) charCount.textContent = '0 / 300';
+  const cc = document.getElementById('char-count');
+  if (cc) cc.textContent = '0 / 300';
 
-  btn.textContent = '✓ Sent!';
+  btn.textContent = 'Sent ✓';
   setTimeout(() => {
-    btn.textContent = 'Send Wishes';
+    btn.textContent = 'Send Wishes ✦';
     btn.disabled    = false;
-  }, 2000);
+  }, 2200);
 
   await renderWishes();
 }
@@ -303,7 +327,6 @@ if (wishMsg && charEl) {
 
 // ── RSVP ──────────────────────────────────────────────────────────
 async function updateStats() {
-  if (!isFirebaseReady()) return;
   const raw   = await fbGet('rsvp');
   const list  = fbToArray(raw);
   const hadir = list.filter(r => r.status === 'hadir').length;
@@ -331,12 +354,6 @@ async function renderRSVP() {
   const listEl  = document.getElementById('rsvp-list');
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
-
-  if (!isFirebaseReady()) {
-    listEl.innerHTML = '<p style="text-align:center;opacity:0.5;padding:2rem;">⚙️ Firebase belum dikonfigurasi.</p>';
-    if (emptyEl) emptyEl.style.display = 'none';
-    return;
-  }
 
   const raw  = await fbGet('rsvp');
   const list = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
@@ -371,11 +388,6 @@ async function submitRSVP(e) {
   const status = statusEl.value;
   if (!name) return;
 
-  if (!isFirebaseReady()) {
-    alert('Firebase belum dikonfigurasi. Hubungi pengelola website.');
-    return;
-  }
-
   btn.textContent = 'Confirming...';
   btn.disabled    = true;
 
@@ -383,7 +395,6 @@ async function submitRSVP(e) {
   const raw      = await fbGet('rsvp');
   const list     = fbToArray(raw);
   const existing = list.find(r => r.name.toLowerCase() === name.toLowerCase());
-
   if (existing) {
     await fbPatch(`rsvp/${existing._key}`, { status, timestamp: Date.now() });
   } else {
@@ -393,17 +404,17 @@ async function submitRSVP(e) {
   nameEl.value = '';
   document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
 
-  btn.textContent = '✓ Confirmed!';
+  btn.textContent = 'Confirmed ✓';
   setTimeout(() => {
-    btn.textContent = 'Confirm';
+    btn.textContent = 'Confirm ✦';
     btn.disabled    = false;
-  }, 2000);
+  }, 2200);
 
   await updateStats();
   await renderRSVP();
 }
 
-// ── Auto-refresh setiap 15 detik (sync lintas browser) ────────────
+// ── Auto-refresh setiap 15 detik ────────────────────────────────────
 function startAutoRefresh() {
   setInterval(async () => {
     await renderWishes();
@@ -414,7 +425,127 @@ function startAutoRefresh() {
 
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  initReveal();
   await Promise.all([renderWishes(), updateStats(), renderRSVP()]);
+  initReveal();
   startAutoRefresh();
 });
+
+// ── Music Player (Local Audio) ────────────────────────────────────
+let audio      = null;
+let musicOn    = false;
+let started    = false;
+let fadeInterval = null;
+const TARGET_VOLUME = 0.6;
+const FADE_TIME = 2000; // 2 seconds fade in
+
+function initAudio() {
+  if (audio) return;
+  audio = document.getElementById('bg-audio');
+  if (!audio) return;
+  audio.volume = 0; // Mulai dari 0 untuk fade-in
+
+  audio.addEventListener('play',  () => {
+    setMusicVisual(true);
+    fadeIn();
+  });
+  audio.addEventListener('pause', () => setMusicVisual(false));
+}
+
+function fadeIn() {
+  if (!audio) return;
+  clearInterval(fadeInterval);
+  
+  let vol = 0;
+  audio.volume = vol;
+  const step = 0.02;
+  const intervalSpeed = (FADE_TIME * step) / TARGET_VOLUME;
+
+  fadeInterval = setInterval(() => {
+    vol += step;
+    if (vol >= TARGET_VOLUME) {
+      audio.volume = TARGET_VOLUME;
+      clearInterval(fadeInterval);
+    } else {
+      audio.volume = vol;
+    }
+  }, intervalSpeed);
+}
+
+function setMusicVisual(playing) {
+  musicOn = playing;
+  const btn = document.getElementById('music-player');
+  if (btn) btn.classList.toggle('playing', playing);
+}
+
+function startMusic() {
+  if (started) return;
+  started = true;
+  initAudio();
+  if (audio) audio.play().catch(() => {});
+}
+
+function toggleMusic() {
+  initAudio();
+  if (!audio) return;
+  if (musicOn) {
+    audio.pause();
+  } else {
+    audio.play().catch(() => {});
+  }
+}
+
+// Coba autoplay langsung saat halaman siap
+document.addEventListener('DOMContentLoaded', () => {
+  initAudio();
+
+  // ── Splash Screen ──────────────────────────────────────────────
+  const splash      = document.getElementById('splash');
+  const splashBtn   = document.getElementById('splash-enter');
+
+  function dismissSplash() {
+    if (!splash) return;
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 650);
+    // Start music immediately on button click
+    started = true;
+    if (audio) audio.play().catch(() => {});
+  }
+
+  if (splashBtn) splashBtn.addEventListener('click', dismissSplash);
+  // Also dismiss if user somehow clicks outside card
+  if (splash) {
+    splash.addEventListener('click', (e) => {
+      if (e.target === splash) dismissSplash();
+    });
+  }
+
+  // ── Tombol disc toggle play/pause ──────────────────────────────
+  const btn = document.getElementById('music-player');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      started = true;
+      toggleMusic();
+    });
+  }
+});
+
+// ── Gift Modal Actions ───────────────────────────────────────────
+function openGiftModal() {
+  const modal = document.getElementById('gift-modal');
+  if (modal) {
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden'; // Lock background scroll
+  }
+}
+
+function closeGiftModal() {
+  const modal = document.getElementById('gift-modal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; // Unlock background scroll
+  }
+}
+
