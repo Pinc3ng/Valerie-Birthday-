@@ -5,12 +5,52 @@
 
 'use strict';
 
-// ── Storage ────────────────────────────────────────────────────────
-const KEY_WISHES = 'vv_wishes_v2';
-const KEY_RSVP   = 'vv_rsvp_v2';
+// ── 🔥 Firebase Config ─────────────────────────────────────────────
+// GANTI URL ini dengan Firebase Realtime Database URL kamu!
+// Contoh: 'https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+const FIREBASE_URL = 'https://web-app-demo-vincent-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-const load = (key) => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } };
-const save = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} };
+// ── Firebase REST Helpers ──────────────────────────────────────────
+async function fbGet(path) {
+  try {
+    const res  = await fetch(`${FIREBASE_URL}/${path}.json`);
+    const data = await res.json();
+    return data;
+  } catch { return null; }
+}
+
+async function fbPost(path, data) {
+  try {
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch { return null; }
+}
+
+async function fbPatch(path, data) {
+  try {
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch { return null; }
+}
+
+// Convert Firebase object { key: {…}, key2: {…} } → array
+function fbToArray(obj) {
+  if (!obj) return [];
+  return Object.entries(obj).map(([key, val]) => ({ _key: key, ...val }));
+}
+
+// Firebase ready check
+function isFirebaseReady() {
+  return FIREBASE_URL && FIREBASE_URL !== 'PASTE_FIREBASE_URL_KAMU_DISINI';
+}
 
 // ── XSS ────────────────────────────────────────────────────────────
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -182,11 +222,19 @@ function fmtDate(ts) {
 }
 
 // ── Wishes ────────────────────────────────────────────────────────
-function renderWishes() {
-  const wishes  = load(KEY_WISHES);
+async function renderWishes() {
   const display = document.getElementById('wishes-display');
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
+
+  if (!isFirebaseReady()) {
+    display.innerHTML = '<p style="text-align:center;opacity:0.5;padding:2rem;">⚙️ Firebase belum dikonfigurasi.</p>';
+    if (empty) empty.style.display = 'none';
+    return;
+  }
+
+  const raw    = await fbGet('wishes');
+  const wishes = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
 
   display.innerHTML = '';
 
@@ -196,7 +244,7 @@ function renderWishes() {
   }
   if (empty) empty.style.display = 'none';
 
-  [...wishes].reverse().forEach((w, i) => {
+  wishes.forEach((w, i) => {
     const card = document.createElement('div');
     card.className = 'wish-card';
     card.style.animationDelay = (i * 0.07) + 's';
@@ -209,7 +257,7 @@ function renderWishes() {
   });
 }
 
-function submitWish(e) {
+async function submitWish(e) {
   e.preventDefault();
   const nameEl = document.getElementById('wish-name');
   const msgEl  = document.getElementById('wish-message');
@@ -220,22 +268,28 @@ function submitWish(e) {
   const message = msgEl.value.trim();
   if (!name || !message) return;
 
-  const wishes = load(KEY_WISHES);
-  wishes.push({ name, message, timestamp: Date.now() });
-  save(KEY_WISHES, wishes);
+  if (!isFirebaseReady()) {
+    alert('Firebase belum dikonfigurasi. Hubungi pengelola website.');
+    return;
+  }
+
+  btn.textContent = 'Sending...';
+  btn.disabled    = true;
+
+  await fbPost('wishes', { name, message, timestamp: Date.now() });
 
   nameEl.value = '';
   msgEl.value  = '';
-  document.getElementById('char-count').textContent = '0 / 300';
+  const charCount = document.getElementById('char-count');
+  if (charCount) charCount.textContent = '0 / 300';
 
-  btn.textContent = 'Sent';
-  btn.disabled    = true;
+  btn.textContent = '✓ Sent!';
   setTimeout(() => {
     btn.textContent = 'Send Wishes';
     btn.disabled    = false;
   }, 2000);
 
-  renderWishes();
+  await renderWishes();
 }
 
 // Char counter
@@ -248,8 +302,10 @@ if (wishMsg && charEl) {
 }
 
 // ── RSVP ──────────────────────────────────────────────────────────
-function updateStats() {
-  const list  = load(KEY_RSVP);
+async function updateStats() {
+  if (!isFirebaseReady()) return;
+  const raw   = await fbGet('rsvp');
+  const list  = fbToArray(raw);
   const hadir = list.filter(r => r.status === 'hadir').length;
   const tidak = list.filter(r => r.status === 'tidak').length;
   animCount('count-hadir', hadir);
@@ -271,11 +327,19 @@ function animCount(id, target) {
   }, 40);
 }
 
-function renderRSVP() {
-  const list    = load(KEY_RSVP);
+async function renderRSVP() {
   const listEl  = document.getElementById('rsvp-list');
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
+
+  if (!isFirebaseReady()) {
+    listEl.innerHTML = '<p style="text-align:center;opacity:0.5;padding:2rem;">⚙️ Firebase belum dikonfigurasi.</p>';
+    if (emptyEl) emptyEl.style.display = 'none';
+    return;
+  }
+
+  const raw  = await fbGet('rsvp');
+  const list = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
 
   listEl.innerHTML = '';
   if (list.length === 0) {
@@ -284,7 +348,7 @@ function renderRSVP() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
-  [...list].reverse().forEach((r, i) => {
+  list.forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'guest-entry';
     row.style.animationDelay = (i * 0.05) + 's';
@@ -296,7 +360,7 @@ function renderRSVP() {
   });
 }
 
-function submitRSVP(e) {
+async function submitRSVP(e) {
   e.preventDefault();
   const nameEl   = document.getElementById('rsvp-name');
   const statusEl = document.querySelector('input[name="rsvp-status"]:checked');
@@ -307,34 +371,50 @@ function submitRSVP(e) {
   const status = statusEl.value;
   if (!name) return;
 
-  const list = load(KEY_RSVP);
-  const idx  = list.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
-  if (idx !== -1) {
-    list[idx].status = status;
-    list[idx].timestamp = Date.now();
-  } else {
-    list.push({ name, status, timestamp: Date.now() });
+  if (!isFirebaseReady()) {
+    alert('Firebase belum dikonfigurasi. Hubungi pengelola website.');
+    return;
   }
-  save(KEY_RSVP, list);
+
+  btn.textContent = 'Confirming...';
+  btn.disabled    = true;
+
+  // Kalau nama sudah ada → update, bukan duplikat
+  const raw      = await fbGet('rsvp');
+  const list     = fbToArray(raw);
+  const existing = list.find(r => r.name.toLowerCase() === name.toLowerCase());
+
+  if (existing) {
+    await fbPatch(`rsvp/${existing._key}`, { status, timestamp: Date.now() });
+  } else {
+    await fbPost('rsvp', { name, status, timestamp: Date.now() });
+  }
 
   nameEl.value = '';
   document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
 
-  btn.textContent = 'Confirmed';
-  btn.disabled    = true;
+  btn.textContent = '✓ Confirmed!';
   setTimeout(() => {
     btn.textContent = 'Confirm';
     btn.disabled    = false;
   }, 2000);
 
-  updateStats();
-  renderRSVP();
+  await updateStats();
+  await renderRSVP();
+}
+
+// ── Auto-refresh setiap 15 detik (sync lintas browser) ────────────
+function startAutoRefresh() {
+  setInterval(async () => {
+    await renderWishes();
+    await renderRSVP();
+    await updateStats();
+  }, 15000);
 }
 
 // ── Init ──────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  renderWishes();
-  updateStats();
-  renderRSVP();
+document.addEventListener('DOMContentLoaded', async () => {
   initReveal();
+  await Promise.all([renderWishes(), updateStats(), renderRSVP()]);
+  startAutoRefresh();
 });
