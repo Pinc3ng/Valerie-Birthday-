@@ -1,6 +1,7 @@
 /* ================================================================
    VALLERIE VALENCIA — SWEET SEVENTEEN
    JavaScript: Countdown · Sparkle Particles · Wishes · RSVP · Copy
+   Integrated with Firebase Realtime Database for cross-device sync
    ================================================================ */
 
 'use strict';
@@ -16,31 +17,45 @@ async function fbGet(path) {
     return data;
   } catch { return null; }
 }
+
 async function fbPost(path, data) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
     return await res.json();
   } catch { return null; }
 }
+
 async function fbPatch(path, data) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
     return await res.json();
   } catch { return null; }
 }
+
 function fbToArray(obj) {
   if (!obj) return [];
   return Object.entries(obj).map(([key, val]) => ({ _key: key, ...val }));
 }
 
-// ── XSS ────────────────────────────────────────────────────────────
+// ── Local Storage Fallback ───────────────────────────────────────────
+const KEY_WISHES = 'vv_wishes_v2';
+const KEY_RSVP   = 'vv_rsvp_v2';
+
+const loadLocal = (key) => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } };
+const saveLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} };
+
+// ── XSS Protection ─────────────────────────────────────────────────
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-// ── Countdown ──────────────────────────────────────────────────────
+// ── Countdown Timer ────────────────────────────────────────────────
 const TARGET = new Date('2026-10-24T18:00:00+07:00');
 
 function pad(n, l = 2) { return String(n).padStart(l, '0'); }
@@ -154,7 +169,6 @@ tick();
       this.phase   = Math.random() * Math.PI * 2;
       this.spin    = (Math.random() - 0.5) * 0.04;
       this.c       = COLORS[Math.floor(Math.random() * COLORS.length)];
-      // 40% sparkle stars, 60% soft dots
       this.type    = Math.random() > 0.60 ? 'star' : 'dot';
     }
     update() {
@@ -181,7 +195,6 @@ tick();
     }
   }
 
-  // Create particle pool
   for (let i = 0; i < 90; i++) particles.push(new Dot());
 
   function loop() {
@@ -201,7 +214,7 @@ window.addEventListener('scroll', () => {
 // ── Scroll reveal ──────────────────────────────────────────────────
 function initReveal() {
   const els = document.querySelectorAll(
-    '.countdown-grid, .gallery-grid, .gift-grid, .stats-row, .form-wrapper, .section-heading, .eyebrow, .section-body, .guest-list-wrap'
+    '.countdown-grid, .gift-grid, .stats-row, .form-wrapper, .section-heading, .eyebrow, .section-body, .guest-list-wrap'
   );
   els.forEach(el => el.classList.add('reveal'));
 
@@ -257,23 +270,40 @@ function fmtDate(ts) {
   });
 }
 
-// ── Wishes ────────────────────────────────────────────────────────
+// ── Wishes (Firebase + Local Storage) ─────────────────────────────
+async function loadWishes() {
+  const fbData = await fbGet('valerie_wishes');
+  if (fbData) {
+    const list = fbToArray(fbData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    saveLocal(KEY_WISHES, list);
+    return list;
+  }
+  return loadLocal(KEY_WISHES);
+}
+
 async function renderWishes() {
   const display = document.getElementById('wishes-display');
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  const raw    = await fbGet('wishes');
-  const wishes = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
+  // Render from local cache first for instant speed
+  let wishes = loadLocal(KEY_WISHES);
+  renderWishesDOM(wishes, display, empty);
 
+  // Then fetch fresh data from Firebase
+  wishes = await loadWishes();
+  renderWishesDOM(wishes, display, empty);
+}
+
+function renderWishesDOM(wishes, display, empty) {
   display.innerHTML = '';
-  if (wishes.length === 0) {
+  if (!wishes || wishes.length === 0) {
     if (empty) empty.style.display = 'block';
     return;
   }
   if (empty) empty.style.display = 'none';
 
-  wishes.forEach((w, i) => {
+  [...wishes].reverse().forEach((w, i) => {
     const card = document.createElement('div');
     card.className = 'wish-card';
     card.style.animationDelay = (i * 0.07) + 's';
@@ -297,10 +327,16 @@ async function submitWish(e) {
   const message = msgEl.value.trim();
   if (!name || !message) return;
 
+  btn.disabled = true;
   btn.textContent = 'Sending...';
-  btn.disabled    = true;
 
-  await fbPost('wishes', { name, message, timestamp: Date.now() });
+  const newWish = { name, message, timestamp: Date.now() };
+
+  // Save to Firebase & Local
+  await fbPost('valerie_wishes', newWish);
+  const local = loadLocal(KEY_WISHES);
+  local.push(newWish);
+  saveLocal(KEY_WISHES, local);
 
   nameEl.value = '';
   msgEl.value  = '';
@@ -313,7 +349,7 @@ async function submitWish(e) {
     btn.disabled    = false;
   }, 2200);
 
-  await renderWishes();
+  renderWishes();
 }
 
 // Char counter
@@ -325,10 +361,18 @@ if (wishMsg && charEl) {
   });
 }
 
-// ── RSVP ──────────────────────────────────────────────────────────
-async function updateStats() {
-  const raw   = await fbGet('rsvp');
-  const list  = fbToArray(raw);
+// ── RSVP (Firebase + Local Storage) ───────────────────────────────
+async function loadRSVP() {
+  const fbData = await fbGet('valerie_rsvp');
+  if (fbData) {
+    const list = fbToArray(fbData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    saveLocal(KEY_RSVP, list);
+    return list;
+  }
+  return loadLocal(KEY_RSVP);
+}
+
+function updateStatsDOM(list) {
   const hadir = list.filter(r => r.status === 'hadir').length;
   const tidak = list.filter(r => r.status === 'tidak').length;
   animCount('count-hadir', hadir);
@@ -355,17 +399,26 @@ async function renderRSVP() {
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
 
-  const raw  = await fbGet('rsvp');
-  const list = fbToArray(raw).sort((a, b) => b.timestamp - a.timestamp);
+  // Render from local cache first
+  let list = loadLocal(KEY_RSVP);
+  renderRSVPDOM(list, listEl, emptyEl);
+  updateStatsDOM(list);
 
+  // Then fetch fresh data from Firebase
+  list = await loadRSVP();
+  renderRSVPDOM(list, listEl, emptyEl);
+  updateStatsDOM(list);
+}
+
+function renderRSVPDOM(list, listEl, emptyEl) {
   listEl.innerHTML = '';
-  if (list.length === 0) {
+  if (!list || list.length === 0) {
     if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
-  list.forEach((r, i) => {
+  [...list].reverse().forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'guest-entry';
     row.style.animationDelay = (i * 0.05) + 's';
@@ -388,18 +441,24 @@ async function submitRSVP(e) {
   const status = statusEl.value;
   if (!name) return;
 
+  btn.disabled = true;
   btn.textContent = 'Confirming...';
-  btn.disabled    = true;
 
-  // Kalau nama sudah ada → update, bukan duplikat
-  const raw      = await fbGet('rsvp');
-  const list     = fbToArray(raw);
-  const existing = list.find(r => r.name.toLowerCase() === name.toLowerCase());
-  if (existing) {
-    await fbPatch(`rsvp/${existing._key}`, { status, timestamp: Date.now() });
+  const newEntry = { name, status, timestamp: Date.now() };
+
+  // Save to Firebase
+  const fbKey = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  await fbPatch(`valerie_rsvp/${fbKey}`, newEntry);
+
+  // Save to Local
+  const list = loadLocal(KEY_RSVP);
+  const idx  = list.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
+  if (idx !== -1) {
+    list[idx] = newEntry;
   } else {
-    await fbPost('rsvp', { name, status, timestamp: Date.now() });
+    list.push(newEntry);
   }
+  saveLocal(KEY_RSVP, list);
 
   nameEl.value = '';
   document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
@@ -410,39 +469,22 @@ async function submitRSVP(e) {
     btn.disabled    = false;
   }, 2200);
 
-  await updateStats();
-  await renderRSVP();
+  renderRSVP();
 }
 
-// ── Auto-refresh setiap 15 detik ────────────────────────────────────
-function startAutoRefresh() {
-  setInterval(async () => {
-    await renderWishes();
-    await renderRSVP();
-    await updateStats();
-  }, 15000);
-}
-
-// ── Init ──────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([renderWishes(), updateStats(), renderRSVP()]);
-  initReveal();
-  startAutoRefresh();
-});
-
-// ── Music Player (Local Audio) ────────────────────────────────────
-let audio      = null;
-let musicOn    = false;
-let started    = false;
+// ── Music Player ──────────────────────────────────────────────────
+let audio        = null;
+let musicOn      = false;
+let started      = false;
 let fadeInterval = null;
 const TARGET_VOLUME = 0.6;
-const FADE_TIME = 2000; // 2 seconds fade in
+const FADE_TIME = 2000;
 
 function initAudio() {
   if (audio) return;
   audio = document.getElementById('bg-audio');
   if (!audio) return;
-  audio.volume = 0; // Mulai dari 0 untuk fade-in
+  audio.volume = 0;
 
   audio.addEventListener('play',  () => {
     setMusicVisual(true);
@@ -454,7 +496,6 @@ function initAudio() {
 function fadeIn() {
   if (!audio) return;
   clearInterval(fadeInterval);
-  
   let vol = 0;
   audio.volume = vol;
   const step = 0.02;
@@ -477,13 +518,6 @@ function setMusicVisual(playing) {
   if (btn) btn.classList.toggle('playing', playing);
 }
 
-function startMusic() {
-  if (started) return;
-  started = true;
-  initAudio();
-  if (audio) audio.play().catch(() => {});
-}
-
 function toggleMusic() {
   initAudio();
   if (!audio) return;
@@ -494,49 +528,13 @@ function toggleMusic() {
   }
 }
 
-// Coba autoplay langsung saat halaman siap
-document.addEventListener('DOMContentLoaded', () => {
-  initAudio();
-
-  // ── Splash Screen ──────────────────────────────────────────────
-  const splash      = document.getElementById('splash');
-  const splashBtn   = document.getElementById('splash-enter');
-
-  function dismissSplash() {
-    if (!splash) return;
-    splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 650);
-    // Start music immediately on button click
-    started = true;
-    if (audio) audio.play().catch(() => {});
-  }
-
-  if (splashBtn) splashBtn.addEventListener('click', dismissSplash);
-  // Also dismiss if user somehow clicks outside card
-  if (splash) {
-    splash.addEventListener('click', (e) => {
-      if (e.target === splash) dismissSplash();
-    });
-  }
-
-  // ── Tombol disc toggle play/pause ──────────────────────────────
-  const btn = document.getElementById('music-player');
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      started = true;
-      toggleMusic();
-    });
-  }
-});
-
 // ── Gift Modal Actions ───────────────────────────────────────────
 function openGiftModal() {
   const modal = document.getElementById('gift-modal');
   if (modal) {
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden'; // Lock background scroll
+    document.body.style.overflow = 'hidden';
   }
 }
 
@@ -545,7 +543,43 @@ function closeGiftModal() {
   if (modal) {
     modal.classList.remove('show');
     modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = ''; // Unlock background scroll
+    document.body.style.overflow = '';
   }
 }
 
+// ── DOMContentLoaded Init ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderWishes();
+  renderRSVP();
+  initReveal();
+  initAudio();
+
+  // Splash screen handling
+  const splash    = document.getElementById('splash');
+  const splashBtn = document.getElementById('splash-enter');
+
+  function dismissSplash() {
+    if (!splash) return;
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 650);
+    started = true;
+    if (audio) audio.play().catch(() => {});
+  }
+
+  if (splashBtn) splashBtn.addEventListener('click', dismissSplash);
+  if (splash) {
+    splash.addEventListener('click', (e) => {
+      if (e.target === splash) dismissSplash();
+    });
+  }
+
+  // Music toggle button
+  const musicBtn = document.getElementById('music-player');
+  if (musicBtn) {
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      started = true;
+      toggleMusic();
+    });
+  }
+});

@@ -5,31 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vallerie Valencia — Sweet Seventeen</title>
   <meta name="description" content="An intimate celebration of Vallerie Valencia's seventeenth birthday. October 24, 2026 · Chloe W Villa." />
+  
+  <!-- OpenGraph Metadata -->
   <meta property="og:title" content="Vallerie Valencia — Sweet Seventeen Birthday Party" />
   <meta property="og:description" content="You are cordially invited to celebrate Vallerie Valencia's 17th Birthday. October 24, 2026 · Chloe W Villa." />
   <meta property="og:image" content="https://pinc3ng.github.io/Valerie-Birthday-/sweet17_hero.png" />
   <meta property="og:url" content="https://tinyurl.com/sweet17-valerie" />
   <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#1a0a14" />
+  <meta name="theme-color" content="#fce4ef" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Canvas for subtle particle effect -->
+  <!-- ====== SPLASH SCREEN ====== -->
+  <div class="splash" id="splash">
+    <div class="splash-bg"></div>
+    <div class="splash-content">
+      <div class="splash-petals" aria-hidden="true">
+        <span>🌸</span><span>✨</span><span>🌸</span>
+        <span>💫</span><span>🌸</span><span>✨</span>
+      </div>
+      <p class="splash-pre">You're Invited</p>
+      <h1 class="splash-name">Vallerie's<br><span>Birthday Party</span></h1>
+      <p class="splash-sub">Sweet Seventeen · October 24, 2026</p>
+      <button class="splash-btn" id="splash-enter" aria-label="Open the invitation">
+        <span>Open Invitation</span>
+        <span class="splash-btn-ring"></span>
+      </button>
+      <p class="splash-hint">Click to open 🌸</p>
+    </div>
+  </div>
+
+  <!-- Canvas for sparkle / glitter effect -->
   <canvas id="canvas" aria-hidden="true"></canvas>
+
+  <!-- Decorative corner orbs -->
+  <div class="orb orb-tl" aria-hidden="true"></div>
+  <div class="orb orb-tr" aria-hidden="true"></div>
+  <div class="orb orb-bl" aria-hidden="true"></div>
+  <div class="orb orb-br" aria-hidden="true"></div>
 
   <!-- ====== NAV ====== -->
   <nav class="nav" id="nav">
     <div class="nav-inner">
       <span class="nav-name">Vallerie's Birthday Party</span>
       <div class="nav-links">
-        <a href="#gallery">Gallery</a>
         <a href="#gift">Gift</a>
         <a href="#wishes">Wishes</a>
-        <a href="#rsvp">RSVP</a>
+        <a href="#rsvp">Confirmation</a>
       </div>
     </div>
   </nav>
@@ -39,9 +66,15 @@
     <div class="hero-content">
       <p class="hero-pre">You Are Cordially Invited</p>
       <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
-      <h1 class="hero-title">Vallerie's<br><em>Birthday Party</em></h1>
+
+      <h1 class="hero-title">
+        <span class="hero-name">Vallerie's</span>
+        <span class="hero-event">Birthday Party</span>
+      </h1>
+
       <p class="hero-sub">Sweet Seventeen</p>
       <div class="hero-rule"><span></span><span class="hero-diamond">◆</span><span></span></div>
+
       <div class="hero-meta">
         <div class="hero-meta-item">
           <span class="meta-label">Date</span>
@@ -63,6 +96,7 @@
           <span class="meta-value">All White</span>
         </div>
       </div>
+
       <a href="#rsvp" class="hero-btn">Confirm Attendance</a>
     </div>
     <div class="hero-scroll" aria-hidden="true">
@@ -99,90 +133,62 @@
     </div>
   </section>
 
-  <!-- ====== GALLERY ====== -->
-  <section class="section gallery-section" id="gallery">
-    <div class="container">
-      <p class="eyebrow">Precious Moments</p>
-      <h2 class="section-heading">Gallery</h2>
-      <p class="section-body">Photos will be shared here after the celebration.</p>
-      <div class="gallery-grid">
-        <div class="g-item ph" id="photo-1">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph tall" id="photo-2">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-3">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph wide" id="photo-4">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-5">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-        <div class="g-item ph" id="photo-6">
-          <div class="ph-inner">
-            <span class="ph-icon">◻</span>
-            <span class="ph-text">Photo Coming Soon</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ====== GIFT ====== -->
   <section class="section gift-section" id="gift">
     <div class="container">
       <p class="eyebrow">Send a Gift</p>
       <h2 class="section-heading">Gift Registry</h2>
-      <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, the details below are available for your convenience.</p>
+      <p class="section-body">Your thoughtfulness is the greatest gift of all. If you wish to send something, click the button below to view the registry details.</p>
+      <div style="margin-top: var(--gap-md);">
+        <button class="gift-open-btn" onclick="openGiftModal()" id="btn-open-gift">
+          <span>Send a Gift &nbsp;🎁</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== GIFT MODAL ====== -->
+  <div class="gift-modal" id="gift-modal" aria-hidden="true">
+    <div class="gift-modal-overlay" onclick="closeGiftModal()"></div>
+    <div class="gift-modal-content">
+      <button class="gift-modal-close" onclick="closeGiftModal()" aria-label="Close modal">×</button>
+      <h3 class="gift-modal-title">Gift Registry Details</h3>
+      <p class="gift-modal-subtitle">Your wishes and blessings are more than enough. But if you wish to send a gift, the details are below. Thank you! 🌸</p>
+      
       <div class="gift-grid">
         <div class="gift-card" id="gift-card-bca">
+          <div class="gift-bank-icon">🏦</div>
           <p class="gift-bank">Bank BCA</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="bca-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('bca')" id="btn-bca">Copy Account Number</button>
-          <span class="gift-copied" id="copied-bca">Copied</span>
+          <span class="gift-copied" id="copied-bca">Copied ✓</span>
         </div>
         <div class="gift-card" id="gift-card-mandiri">
+          <div class="gift-bank-icon">🏦</div>
           <p class="gift-bank">Bank Mandiri</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="mandiri-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('mandiri')" id="btn-mandiri">Copy Account Number</button>
-          <span class="gift-copied" id="copied-mandiri">Copied</span>
+          <span class="gift-copied" id="copied-mandiri">Copied ✓</span>
         </div>
         <div class="gift-card" id="gift-card-gopay">
+          <div class="gift-bank-icon">💚</div>
           <p class="gift-bank">GoPay · DANA</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
             <span class="gift-num" id="gopay-number">Coming Soon</span>
           </div>
           <button class="gift-copy-btn" onclick="copyAccount('gopay')" id="btn-gopay">Copy Number</button>
-          <span class="gift-copied" id="copied-gopay">Copied</span>
+          <span class="gift-copied" id="copied-gopay">Copied ✓</span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ====== WISHES ====== -->
   <section class="section wishes-section" id="wishes">
@@ -202,7 +208,7 @@
             <textarea id="wish-message" placeholder="Write your wishes here..." required maxlength="300" rows="4"></textarea>
             <span class="field-count" id="char-count">0 / 300</span>
           </div>
-          <button type="submit" class="form-btn" id="submit-wish">Send Wishes</button>
+          <button type="submit" class="form-btn" id="submit-wish">Send Wishes ✦</button>
         </form>
       </div>
 
@@ -224,12 +230,10 @@
           <span class="stat-num" id="count-hadir">0</span>
           <span class="stat-lbl">Attending</span>
         </div>
-        <div class="stat-line"></div>
         <div class="stat">
           <span class="stat-num" id="count-tidak">0</span>
           <span class="stat-lbl">Not Attending</span>
         </div>
-        <div class="stat-line"></div>
         <div class="stat">
           <span class="stat-num" id="count-total">0</span>
           <span class="stat-lbl">Total Replies</span>
@@ -262,7 +266,7 @@
               </label>
             </div>
           </div>
-          <button type="submit" class="form-btn" id="submit-rsvp">Confirm</button>
+          <button type="submit" class="form-btn" id="submit-rsvp">Confirm ✦</button>
         </form>
       </div>
 
@@ -284,6 +288,27 @@
       <p class="footer-copy">Crafted with love · All rights reserved</p>
     </div>
   </footer>
+
+  <!-- ====== MUSIC PLAYER ====== -->
+  <div class="music-player" id="music-player" title="Background Music">
+    <div class="music-disc" id="music-disc">
+      <div class="music-disc-inner">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="2"/>
+          <circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+    </div>
+    <div class="music-bars" id="music-bars">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="music-label">Music</div>
+  </div>
+
+  <audio id="bg-audio" loop preload="auto" style="display:none;">
+    <source src="music.webm" type="audio/webm">
+  </audio>
 
   <script src="script.js"></script>
 </body>
