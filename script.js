@@ -1,21 +1,24 @@
 /* ================================================================
    VALLERIE VALENCIA — SWEET SEVENTEEN
    JavaScript: Countdown · Sparkle Particles · Wishes · RSVP · Copy
-   Integrated with Firebase Realtime Database for cross-device sync
+   Integrated with Firebase Realtime Database for cross-device live sync
    ================================================================ */
 
 'use strict';
 
-// ── 🔥 Firebase Config ──────────────────────────────────────────────────
+// ── 🔥 Firebase Realtime Database Config ─────────────────────────────────
 const FIREBASE_URL = 'https://web-app-demo-vincent-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 // Firebase REST Helpers
 async function fbGet(path) {
   try {
-    const res  = await fetch(`${FIREBASE_URL}/${path}.json`);
-    const data = await res.json();
-    return data;
-  } catch { return null; }
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('[Firebase] GET error:', e);
+    return null;
+  }
 }
 
 async function fbPost(path, data) {
@@ -25,35 +28,65 @@ async function fbPost(path, data) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    if (!res.ok) return null;
     return await res.json();
-  } catch { return null; }
+  } catch (e) {
+    console.warn('[Firebase] POST error:', e);
+    return null;
+  }
 }
 
-async function fbPatch(path, data) {
+async function fbPut(path, data) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    if (!res.ok) return null;
     return await res.json();
-  } catch { return null; }
+  } catch (e) {
+    console.warn('[Firebase] PUT error:', e);
+    return null;
+  }
 }
 
 function fbToArray(obj) {
-  if (!obj) return [];
-  return Object.entries(obj).map(([key, val]) => ({ _key: key, ...val }));
+  if (!obj || typeof obj !== 'object') return [];
+  return Object.entries(obj).map(([key, val]) => {
+    if (typeof val === 'object' && val !== null) {
+      return { _key: key, ...val };
+    }
+    return { _key: key, value: val };
+  });
 }
 
-// ── Local Storage Fallback ───────────────────────────────────────────
+// ── Local Storage Fallback & Cache ──────────────────────────────────
 const KEY_WISHES = 'vv_wishes_v2';
 const KEY_RSVP   = 'vv_rsvp_v2';
 
-const loadLocal = (key) => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } };
-const saveLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} };
+const loadLocal = (key) => {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocal = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {}
+};
 
 // ── XSS Protection ─────────────────────────────────────────────────
-const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;'
+}[c]));
 
 // ── Countdown Timer ────────────────────────────────────────────────
 const TARGET = new Date('2026-10-24T18:00:00+07:00');
@@ -72,9 +105,9 @@ function tick() {
     return;
   }
   const d = Math.floor(diff / 86400000);
-  const h = Math.floor(diff % 86400000 / 3600000);
-  const m = Math.floor(diff % 3600000 / 60000);
-  const s = Math.floor(diff % 60000 / 1000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
 
   setNum('days',    pad(d, 3));
   setNum('hours',   pad(h));
@@ -150,7 +183,7 @@ tick();
     // Center bright dot
     ctx.beginPath();
     ctx.arc(0, 0, r * 0.55, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${Math.min(cr+40,255)},${Math.min(cg+40,255)},${Math.min(cb+40,255)},${alpha})`;
+    ctx.fillStyle = `rgba(${Math.min(cr + 40, 255)},${Math.min(cg + 40, 255)},${Math.min(cb + 40, 255)},${alpha})`;
     ctx.fill();
 
     ctx.restore();
@@ -243,7 +276,7 @@ function copyAccount(bank) {
   }
 
   const copy = (t) => {
-    if (navigator.clipboard) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(t);
     } else {
       const ta = document.createElement('textarea');
@@ -265,15 +298,16 @@ function copyAccount(bank) {
 
 // ── Format Date ───────────────────────────────────────────────────
 function fmtDate(ts) {
+  if (!ts) return '';
   return new Date(ts).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric'
   });
 }
 
-// ── Wishes (Firebase + Local Storage) ─────────────────────────────
+// ── Wishes (Firebase Realtime Database + Live Sync) ───────────────
 async function loadWishes() {
-  const fbData = await fbGet('valerie_wishes');
-  if (fbData) {
+  const fbData = await fbGet('wishes');
+  if (fbData !== null) {
     const list = fbToArray(fbData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     saveLocal(KEY_WISHES, list);
     return list;
@@ -281,21 +315,23 @@ async function loadWishes() {
   return loadLocal(KEY_WISHES);
 }
 
-async function renderWishes() {
+async function renderWishes(fromNetwork = true) {
   const display = document.getElementById('wishes-display');
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  // Render from local cache first for instant speed
+  // Always show cached/local first for zero perceived latency
   let wishes = loadLocal(KEY_WISHES);
   renderWishesDOM(wishes, display, empty);
 
-  // Then fetch fresh data from Firebase
-  wishes = await loadWishes();
-  renderWishesDOM(wishes, display, empty);
+  if (fromNetwork) {
+    wishes = await loadWishes();
+    renderWishesDOM(wishes, display, empty);
+  }
 }
 
 function renderWishesDOM(wishes, display, empty) {
+  if (!display) return;
   display.innerHTML = '';
   if (!wishes || wishes.length === 0) {
     if (empty) empty.style.display = 'block';
@@ -306,7 +342,7 @@ function renderWishesDOM(wishes, display, empty) {
   [...wishes].reverse().forEach((w, i) => {
     const card = document.createElement('div');
     card.className = 'wish-card';
-    card.style.animationDelay = (i * 0.07) + 's';
+    card.style.animationDelay = (i * 0.05) + 's';
     card.innerHTML = `
       <p class="wish-card-name">${esc(w.name)}</p>
       <p class="wish-card-text">${esc(w.message)}</p>
@@ -321,7 +357,7 @@ async function submitWish(e) {
   const nameEl = document.getElementById('wish-name');
   const msgEl  = document.getElementById('wish-message');
   const btn    = document.getElementById('submit-wish');
-  if (!nameEl || !msgEl) return;
+  if (!nameEl || !msgEl || !btn) return;
 
   const name    = nameEl.value.trim();
   const message = msgEl.value.trim();
@@ -332,11 +368,14 @@ async function submitWish(e) {
 
   const newWish = { name, message, timestamp: Date.now() };
 
-  // Save to Firebase & Local
-  await fbPost('valerie_wishes', newWish);
+  // Optimistic local update
   const local = loadLocal(KEY_WISHES);
   local.push(newWish);
   saveLocal(KEY_WISHES, local);
+  renderWishes(false);
+
+  // Push to Firebase Realtime Database
+  await fbPost('wishes', newWish);
 
   nameEl.value = '';
   msgEl.value  = '';
@@ -349,10 +388,11 @@ async function submitWish(e) {
     btn.disabled    = false;
   }, 2200);
 
-  renderWishes();
+  // Sync fresh state
+  await renderWishes(true);
 }
 
-// Char counter
+// Character counter for wishes textarea
 const wishMsg = document.getElementById('wish-message');
 const charEl  = document.getElementById('char-count');
 if (wishMsg && charEl) {
@@ -361,10 +401,10 @@ if (wishMsg && charEl) {
   });
 }
 
-// ── RSVP (Firebase + Local Storage) ───────────────────────────────
+// ── RSVP / Attendance (Firebase Realtime Database + Live Sync) ─────
 async function loadRSVP() {
-  const fbData = await fbGet('valerie_rsvp');
-  if (fbData) {
+  const fbData = await fbGet('rsvp');
+  if (fbData !== null) {
     const list = fbToArray(fbData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     saveLocal(KEY_RSVP, list);
     return list;
@@ -373,6 +413,7 @@ async function loadRSVP() {
 }
 
 function updateStatsDOM(list) {
+  if (!Array.isArray(list)) return;
   const hadir = list.filter(r => r.status === 'hadir').length;
   const tidak = list.filter(r => r.status === 'tidak').length;
   animCount('count-hadir', hadir);
@@ -383,34 +424,44 @@ function updateStatsDOM(list) {
 function animCount(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
-  const start = parseInt(el.textContent) || 0;
+  const start = parseInt(el.textContent, 10) || 0;
   if (start === target) return;
+
   let cur = start;
   const dir = target > start ? 1 : -1;
+  const step = Math.max(1, Math.floor(Math.abs(target - start) / 8));
+
   const iv = setInterval(() => {
-    cur += dir;
-    el.textContent = cur;
-    if (cur === target) clearInterval(iv);
-  }, 40);
+    if (Math.abs(target - cur) <= step) {
+      cur = target;
+      el.textContent = cur;
+      clearInterval(iv);
+    } else {
+      cur += dir * step;
+      el.textContent = cur;
+    }
+  }, 35);
 }
 
-async function renderRSVP() {
+async function renderRSVP(fromNetwork = true) {
   const listEl  = document.getElementById('rsvp-list');
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
 
-  // Render from local cache first
+  // Render from local cache first for instant response
   let list = loadLocal(KEY_RSVP);
   renderRSVPDOM(list, listEl, emptyEl);
   updateStatsDOM(list);
 
-  // Then fetch fresh data from Firebase
-  list = await loadRSVP();
-  renderRSVPDOM(list, listEl, emptyEl);
-  updateStatsDOM(list);
+  if (fromNetwork) {
+    list = await loadRSVP();
+    renderRSVPDOM(list, listEl, emptyEl);
+    updateStatsDOM(list);
+  }
 }
 
 function renderRSVPDOM(list, listEl, emptyEl) {
+  if (!listEl) return;
   listEl.innerHTML = '';
   if (!list || list.length === 0) {
     if (emptyEl) emptyEl.style.display = 'block';
@@ -421,10 +472,11 @@ function renderRSVPDOM(list, listEl, emptyEl) {
   [...list].reverse().forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'guest-entry';
-    row.style.animationDelay = (i * 0.05) + 's';
+    row.style.animationDelay = (i * 0.04) + 's';
+    const isHadir = r.status === 'hadir';
     row.innerHTML = `
       <span class="guest-entry-name">${esc(r.name)}</span>
-      <span class="guest-entry-status ${r.status}">${r.status === 'hadir' ? 'Attending' : 'Not Attending'}</span>
+      <span class="guest-entry-status ${isHadir ? 'hadir' : 'tidak'}">${isHadir ? 'Attending' : 'Not Attending'}</span>
     `;
     listEl.appendChild(row);
   });
@@ -435,7 +487,7 @@ async function submitRSVP(e) {
   const nameEl   = document.getElementById('rsvp-name');
   const statusEl = document.querySelector('input[name="rsvp-status"]:checked');
   const btn      = document.getElementById('submit-rsvp');
-  if (!nameEl || !statusEl) return;
+  if (!nameEl || !statusEl || !btn) return;
 
   const name   = nameEl.value.trim();
   const status = statusEl.value;
@@ -446,11 +498,10 @@ async function submitRSVP(e) {
 
   const newEntry = { name, status, timestamp: Date.now() };
 
-  // Save to Firebase
-  const fbKey = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  await fbPatch(`valerie_rsvp/${fbKey}`, newEntry);
+  // Sanitize key for Firebase (disallowed: . # $ / [ ])
+  const fbKey = encodeURIComponent(name.toLowerCase().replace(/[\.\#\$\/\[\]]/g, '_'));
 
-  // Save to Local
+  // Optimistic local update (deduplicate by lowercase name)
   const list = loadLocal(KEY_RSVP);
   const idx  = list.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
   if (idx !== -1) {
@@ -459,6 +510,11 @@ async function submitRSVP(e) {
     list.push(newEntry);
   }
   saveLocal(KEY_RSVP, list);
+  renderRSVPDOM(list, document.getElementById('rsvp-list'), document.getElementById('rsvp-empty'));
+  updateStatsDOM(list);
+
+  // Save to Firebase Realtime Database
+  await fbPut(`rsvp/${fbKey}`, newEntry);
 
   nameEl.value = '';
   document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
@@ -469,7 +525,64 @@ async function submitRSVP(e) {
     btn.disabled    = false;
   }, 2200);
 
-  renderRSVP();
+  // Sync fresh state from server
+  await renderRSVP(true);
+}
+
+// ── ⚡ Real-Time Live Sync (Server-Sent Events + Polling) ───────────
+function initLiveSync() {
+  // 1. Firebase Server-Sent Events (SSE) for instant push
+  function connectSSE(path, onDataChanged) {
+    try {
+      if (typeof window.EventSource === 'undefined') return null;
+      const es = new EventSource(`${FIREBASE_URL}/${path}.json`);
+
+      es.addEventListener('put', (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed && parsed.data !== undefined) {
+            onDataChanged();
+          }
+        } catch {}
+      });
+
+      es.addEventListener('patch', () => {
+        onDataChanged();
+      });
+
+      es.onerror = () => {
+        // Disconnected or sleeping tab, close and rely on polling fallback
+        try { es.close(); } catch {}
+      };
+
+      return es;
+    } catch {
+      return null;
+    }
+  }
+
+  // Connect live listeners for RSVP and Wishes
+  connectSSE('rsvp', () => renderRSVP(true));
+  connectSSE('wishes', () => renderWishes(true));
+
+  // 2. Periodic Polling fallback (every 7 seconds)
+  setInterval(() => {
+    renderRSVP(true);
+    renderWishes(true);
+  }, 7000);
+
+  // 3. Tab Visibility / Focus refresh (when returning from mobile sleep / another tab)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      renderRSVP(true);
+      renderWishes(true);
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    renderRSVP(true);
+    renderWishes(true);
+  });
 }
 
 // ── Music Player ──────────────────────────────────────────────────
@@ -486,7 +599,7 @@ function initAudio() {
   if (!audio) return;
   audio.volume = 0;
 
-  audio.addEventListener('play',  () => {
+  audio.addEventListener('play', () => {
     setMusicVisual(true);
     fadeIn();
   });
@@ -549,8 +662,9 @@ function closeGiftModal() {
 
 // ── DOMContentLoaded Init ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  renderWishes();
-  renderRSVP();
+  renderWishes(true);
+  renderRSVP(true);
+  initLiveSync();
   initReveal();
   initAudio();
 
@@ -561,7 +675,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function dismissSplash() {
     if (!splash) return;
     splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 650);
+    setTimeout(() => {
+      try { splash.remove(); } catch {}
+    }, 650);
     started = true;
     if (audio) audio.play().catch(() => {});
   }
