@@ -482,6 +482,36 @@ function renderRSVPDOM(list, listEl, emptyEl) {
   });
 }
 
+// ── RSVP Already-Submitted Key ───────────────────────────────────
+const KEY_RSVP_DONE = 'vv_rsvp_done_v1';
+
+function getRSVPDone() {
+  try { return JSON.parse(localStorage.getItem(KEY_RSVP_DONE)); } catch { return null; }
+}
+
+function setRSVPDone(entry) {
+  try { localStorage.setItem(KEY_RSVP_DONE, JSON.stringify(entry)); } catch {}
+}
+
+function showRSVPConfirmed(entry) {
+  const wrapper = document.getElementById('rsvp-form-wrapper');
+  if (!wrapper) return;
+  const isHadir = entry.status === 'hadir';
+  wrapper.innerHTML = `
+    <div class="rsvp-done-card">
+      <div class="rsvp-done-icon">${isHadir ? '🎉' : '💌'}</div>
+      <p class="rsvp-done-title">Thank you, ${esc(entry.name)}!</p>
+      <p class="rsvp-done-status">
+        You have confirmed as
+        <span class="rsvp-done-badge ${isHadir ? 'hadir' : 'tidak'}">
+          ${isHadir ? 'Attending ✦' : 'Not Attending'}
+        </span>
+      </p>
+      <p class="rsvp-done-note">Your response has been recorded. We look forward to celebrating with you! 🌸</p>
+    </div>
+  `;
+}
+
 async function submitRSVP(e) {
   e.preventDefault();
   const nameEl   = document.getElementById('rsvp-name');
@@ -516,17 +546,14 @@ async function submitRSVP(e) {
   // Save to Firebase Realtime Database
   await fbPut(`rsvp/${fbKey}`, newEntry);
 
-  nameEl.value = '';
-  document.querySelectorAll('input[name="rsvp-status"]').forEach(r => r.checked = false);
-
-  btn.textContent = 'Confirmed ✓';
-  setTimeout(() => {
-    btn.textContent = 'Confirm ✦';
-    btn.disabled    = false;
-  }, 2200);
+  // Mark this browser as already submitted — hide form permanently
+  setRSVPDone(newEntry);
 
   // Sync fresh state from server
   await renderRSVP(true);
+
+  // Replace form with confirmation card
+  showRSVPConfirmed(newEntry);
 }
 
 // ── ⚡ Real-Time Live Sync (Server-Sent Events + Polling) ───────────
@@ -585,60 +612,18 @@ function initLiveSync() {
   });
 }
 
-// ── Music Player ──────────────────────────────────────────────────
-let audio        = null;
-let musicOn      = false;
-let started      = false;
-let fadeInterval = null;
-const TARGET_VOLUME = 0.6;
-const FADE_TIME = 2000;
-
-function initAudio() {
-  if (audio) return;
-  audio = document.getElementById('bg-audio');
+// ── Background Music (no UI button) ──────────────────────────────
+function playBgMusic() {
+  const audio = document.getElementById('bg-audio');
   if (!audio) return;
   audio.volume = 0;
-
-  audio.addEventListener('play', () => {
-    setMusicVisual(true);
-    fadeIn();
-  });
-  audio.addEventListener('pause', () => setMusicVisual(false));
-}
-
-function fadeIn() {
-  if (!audio) return;
-  clearInterval(fadeInterval);
+  audio.play().catch(() => {});
   let vol = 0;
-  audio.volume = vol;
-  const step = 0.02;
-  const intervalSpeed = (FADE_TIME * step) / TARGET_VOLUME;
-
-  fadeInterval = setInterval(() => {
-    vol += step;
-    if (vol >= TARGET_VOLUME) {
-      audio.volume = TARGET_VOLUME;
-      clearInterval(fadeInterval);
-    } else {
-      audio.volume = vol;
-    }
-  }, intervalSpeed);
-}
-
-function setMusicVisual(playing) {
-  musicOn = playing;
-  const btn = document.getElementById('music-player');
-  if (btn) btn.classList.toggle('playing', playing);
-}
-
-function toggleMusic() {
-  initAudio();
-  if (!audio) return;
-  if (musicOn) {
-    audio.pause();
-  } else {
-    audio.play().catch(() => {});
-  }
+  const iv = setInterval(() => {
+    vol = Math.min(vol + 0.02, 0.6);
+    audio.volume = vol;
+    if (vol >= 0.6) clearInterval(iv);
+  }, 66);
 }
 
 // ── Gift Modal Actions ───────────────────────────────────────────
@@ -666,7 +651,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRSVP(true);
   initLiveSync();
   initReveal();
-  initAudio();
+
+  // Check if this browser already submitted RSVP
+  const doneEntry = getRSVPDone();
+  if (doneEntry) showRSVPConfirmed(doneEntry);
 
   // Splash screen handling
   const splash    = document.getElementById('splash');
@@ -678,24 +666,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       try { splash.remove(); } catch {}
     }, 650);
-    started = true;
-    if (audio) audio.play().catch(() => {});
+    playBgMusic();
   }
 
   if (splashBtn) splashBtn.addEventListener('click', dismissSplash);
   if (splash) {
     splash.addEventListener('click', (e) => {
       if (e.target === splash) dismissSplash();
-    });
-  }
-
-  // Music toggle button
-  const musicBtn = document.getElementById('music-player');
-  if (musicBtn) {
-    musicBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      started = true;
-      toggleMusic();
     });
   }
 });
