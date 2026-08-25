@@ -617,7 +617,6 @@ const YT_VIDEO_ID = 'kKHRfUt6cKo';
 let ytPlayer       = null;
 let ytReady        = false;
 let ytPlayPending  = false;
-let ytMusicOn      = false;
 
 // Called automatically by YouTube API when ready
 function onYouTubeIframeAPIReady() {
@@ -644,12 +643,8 @@ function onYouTubeIframeAPIReady() {
         }
       },
       onStateChange: (e) => {
-        if (e.data === YT.PlayerState.PLAYING) {
-          ytMusicOn = true;
-          setMusicFabPlaying(true);
-        } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
-          ytMusicOn = false;
-          setMusicFabPlaying(false);
+        if (e.data === YT.PlayerState.ENDED) {
+          ytPlayer.playVideo(); // fallback loop
         }
       },
     },
@@ -667,20 +662,6 @@ function startYTMusic() {
     ytPlayer.setVolume(vol);
     if (vol >= 60) clearInterval(iv);
   }, 66);
-}
-
-function toggleYTMusic() {
-  if (!ytPlayer || !ytReady) return;
-  if (ytMusicOn) {
-    ytPlayer.pauseVideo();
-  } else {
-    ytPlayer.playVideo();
-  }
-}
-
-function setMusicFabPlaying(playing) {
-  const fab = document.getElementById('music-fab');
-  if (fab) fab.classList.toggle('playing', playing);
 }
 
 // Keep backwards-compat alias used by dismissSplash
@@ -736,11 +717,5 @@ document.addEventListener('DOMContentLoaded', () => {
     splash.addEventListener('click', (e) => {
       if (e.target === splash) dismissSplash();
     });
-  }
-
-  // Music FAB toggle
-  const musicFab = document.getElementById('music-fab');
-  if (musicFab) {
-    musicFab.addEventListener('click', () => toggleYTMusic());
   }
 });
