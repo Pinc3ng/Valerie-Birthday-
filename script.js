@@ -612,18 +612,80 @@ function initLiveSync() {
   });
 }
 
-// ── Background Music (no UI button) ──────────────────────────────
-function playBgMusic() {
-  const audio = document.getElementById('bg-audio');
-  if (!audio) return;
-  audio.volume = 0;
-  audio.play().catch(() => {});
+// ── Background Music via YouTube IFrame API ──────────────────────
+const YT_VIDEO_ID = 'kKHRfUt6cKo';
+let ytPlayer       = null;
+let ytReady        = false;
+let ytPlayPending  = false;
+let ytMusicOn      = false;
+
+// Called automatically by YouTube API when ready
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: YT_VIDEO_ID,
+    playerVars: {
+      autoplay:       0,
+      controls:       0,
+      loop:           1,
+      playlist:       YT_VIDEO_ID,
+      modestbranding: 1,
+      rel:            0,
+      iv_load_policy: 3,
+      fs:             0,
+      disablekb:      1,
+    },
+    events: {
+      onReady: (e) => {
+        ytReady = true;
+        e.target.setVolume(0);
+        if (ytPlayPending) {
+          ytPlayPending = false;
+          startYTMusic();
+        }
+      },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.PLAYING) {
+          ytMusicOn = true;
+          setMusicFabPlaying(true);
+        } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+          ytMusicOn = false;
+          setMusicFabPlaying(false);
+        }
+      },
+    },
+  });
+}
+
+function startYTMusic() {
+  if (!ytPlayer || !ytReady) { ytPlayPending = true; return; }
+  ytPlayer.setVolume(0);
+  ytPlayer.playVideo();
+  // Fade volume in over ~2s
   let vol = 0;
   const iv = setInterval(() => {
-    vol = Math.min(vol + 0.02, 0.6);
-    audio.volume = vol;
-    if (vol >= 0.6) clearInterval(iv);
+    vol = Math.min(vol + 2, 60);
+    ytPlayer.setVolume(vol);
+    if (vol >= 60) clearInterval(iv);
   }, 66);
+}
+
+function toggleYTMusic() {
+  if (!ytPlayer || !ytReady) return;
+  if (ytMusicOn) {
+    ytPlayer.pauseVideo();
+  } else {
+    ytPlayer.playVideo();
+  }
+}
+
+function setMusicFabPlaying(playing) {
+  const fab = document.getElementById('music-fab');
+  if (fab) fab.classList.toggle('playing', playing);
+}
+
+// Keep backwards-compat alias used by dismissSplash
+function playBgMusic() {
+  startYTMusic();
 }
 
 // ── Gift Modal Actions ───────────────────────────────────────────
@@ -674,5 +736,11 @@ document.addEventListener('DOMContentLoaded', () => {
     splash.addEventListener('click', (e) => {
       if (e.target === splash) dismissSplash();
     });
+  }
+
+  // Music FAB toggle
+  const musicFab = document.getElementById('music-fab');
+  if (musicFab) {
+    musicFab.addEventListener('click', () => toggleYTMusic());
   }
 });

@@ -1599,3 +1599,93 @@ input, textarea { font-family: var(--sans); }
   color: var(--text-muted, #b49ca8);
   font-style: italic;
 }
+
+/* ── Floating Music FAB Button ───────────────────────────────────── */
+.music-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 999;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c4547a, #e87aa8);
+  box-shadow: 0 4px 20px rgba(196, 84, 122, 0.45);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fabPulse 3s ease-in-out infinite;
+  user-select: none;
+}
+
+.music-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(196, 84, 122, 0.6);
+}
+
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(196, 84, 122, 0.45); }
+  50%       { box-shadow: 0 4px 30px rgba(196, 84, 122, 0.7), 0 0 0 8px rgba(196, 84, 122, 0.12); }
+}
+
+/* Music icon (disc SVG) */
+.music-fab-disc {
+  width: 22px;
+  height: 22px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.music-fab-disc svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Spinning disc when playing */
+.music-fab.playing .music-fab-disc {
+  animation: spinDisc 4s linear infinite;
+}
+
+@keyframes spinDisc {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Equalizer bars (shown only when playing) */
+.music-fab-bars {
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 14px;
+}
+
+.music-fab.playing .music-fab-disc { display: none; }
+.music-fab.playing .music-fab-bars {
+  display: flex;
+}
+
+.music-fab-bars span {
+  display: block;
+  width: 3px;
+  background: #fff;
+  border-radius: 2px;
+  animation: eqBar 0.9s ease-in-out infinite alternate;
+}
+
+.music-fab-bars span:nth-child(1) { height: 6px;  animation-delay: 0s;    animation-duration: 0.7s; }
+.music-fab-bars span:nth-child(2) { height: 14px; animation-delay: 0.15s; animation-duration: 0.9s; }
+.music-fab-bars span:nth-child(3) { height: 10px; animation-delay: 0.3s;  animation-duration: 0.6s; }
+.music-fab-bars span:nth-child(4) { height: 7px;  animation-delay: 0.1s;  animation-duration: 0.8s; }
+
+@keyframes eqBar {
+  from { transform: scaleY(0.3); }
+  to   { transform: scaleY(1); }
+}
