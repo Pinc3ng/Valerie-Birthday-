@@ -62,8 +62,8 @@ function fbToArray(obj) {
 }
 
 // ── Local Storage Fallback & Cache ──────────────────────────────────
-const KEY_WISHES = 'vv_wishes_v2';
-const KEY_RSVP   = 'vv_rsvp_v2';
+const KEY_WISHES = 'vv_wishes_v3';
+const KEY_RSVP   = 'vv_rsvp_v3';
 
 const loadLocal = (key) => {
   try {
@@ -417,11 +417,11 @@ async function loadRSVP() {
 
 function updateStatsDOM(list) {
   if (!Array.isArray(list)) list = [];
-  const hadir = list.filter(r => r.status === 'hadir').length;
+  const hadir = list.filter(r => r.status === 'hadir').reduce((sum, r) => sum + (parseInt(r.pax, 10) || 1), 0);
   const tidak = list.filter(r => r.status === 'tidak').length;
   animCount('count-hadir', hadir);
   animCount('count-tidak', tidak);
-  animCount('count-total', list.length);
+  animCount('count-total', hadir + tidak);
 }
 
 function animCount(id, target) {
@@ -476,8 +476,10 @@ function renderRSVPDOM(list, listEl, emptyEl) {
     row.className = 'guest-entry';
     row.style.animationDelay = (i * 0.04) + 's';
     const isHadir = r.status === 'hadir';
+    const paxNum = parseInt(r.pax, 10) || 1;
+    const paxBadge = isHadir && paxNum > 1 ? `<span class="guest-pax">${paxNum} Guests</span>` : '';
     row.innerHTML = `
-      <span class="guest-entry-name">${esc(r.name)}</span>
+      <span class="guest-entry-name">${esc(r.name)}${paxBadge}</span>
       <span class="guest-entry-status ${isHadir ? 'hadir' : 'tidak'}">${isHadir ? 'Attending' : 'Not Attending'}</span>
     `;
     listEl.appendChild(row);
@@ -485,7 +487,7 @@ function renderRSVPDOM(list, listEl, emptyEl) {
 }
 
 // ── RSVP Already-Submitted Key ───────────────────────────────────
-const KEY_RSVP_DONE = 'vv_rsvp_done_v1';
+const KEY_RSVP_DONE = 'vv_rsvp_done_v2';
 
 function getRSVPDone() {
   try { return JSON.parse(localStorage.getItem(KEY_RSVP_DONE)); } catch { return null; }
@@ -499,6 +501,8 @@ function showRSVPConfirmed(entry) {
   const wrapper = document.getElementById('rsvp-form-wrapper');
   if (!wrapper) return;
   const isHadir = entry.status === 'hadir';
+  const paxNum = parseInt(entry.pax, 10) || 1;
+  const paxText = isHadir && paxNum > 1 ? ` (${paxNum} Guests)` : '';
   wrapper.innerHTML = `
     <div class="rsvp-done-card">
       <div class="rsvp-done-icon">${isHadir ? '🎉' : '💌'}</div>
@@ -506,7 +510,7 @@ function showRSVPConfirmed(entry) {
       <p class="rsvp-done-status">
         You have confirmed as
         <span class="rsvp-done-badge ${isHadir ? 'hadir' : 'tidak'}">
-          ${isHadir ? 'Attending ✦' : 'Not Attending'}
+          ${isHadir ? 'Attending' + paxText + ' ✦' : 'Not Attending'}
         </span>
       </p>
       <p class="rsvp-done-note">Your response has been recorded. We look forward to celebrating with you! 🌸</p>
@@ -518,17 +522,19 @@ async function submitRSVP(e) {
   e.preventDefault();
   const nameEl   = document.getElementById('rsvp-name');
   const statusEl = document.querySelector('input[name="rsvp-status"]:checked');
+  const paxEl    = document.getElementById('rsvp-pax');
   const btn      = document.getElementById('submit-rsvp');
   if (!nameEl || !statusEl || !btn) return;
 
   const name   = nameEl.value.trim();
   const status = statusEl.value;
+  const pax    = status === 'hadir' ? (parseInt(paxEl ? paxEl.value : 1, 10) || 1) : 1;
   if (!name) return;
 
   btn.disabled = true;
   btn.textContent = 'Confirming...';
 
-  const newEntry = { name, status, timestamp: Date.now() };
+  const newEntry = { name, status, pax, timestamp: Date.now() };
 
   // Sanitize key for Firebase (disallowed: . # $ / [ ])
   const fbKey = encodeURIComponent(name.toLowerCase().replace(/[\.\#\$\/\[\]]/g, '_'));
@@ -755,6 +761,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if this browser already submitted RSVP
   const doneEntry = getRSVPDone();
   if (doneEntry) showRSVPConfirmed(doneEntry);
+
+  // Toggle Number of Guests field based on attendance selection
+  const hadirRadio = document.getElementById('rsvp-hadir');
+  const tidakRadio = document.getElementById('rsvp-tidak');
+  const paxField   = document.getElementById('field-rsvp-pax');
+  if (hadirRadio && tidakRadio && paxField) {
+    hadirRadio.addEventListener('change', () => {
+      paxField.style.display = '';
+    });
+    tidakRadio.addEventListener('change', () => {
+      paxField.style.display = 'none';
+    });
+  }
 
   // Splash screen handling
   const splash    = document.getElementById('splash');
