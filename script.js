@@ -312,7 +312,9 @@ async function loadWishes() {
     saveLocal(KEY_WISHES, list);
     return list;
   }
-  return loadLocal(KEY_WISHES);
+  // Server returned null (empty database / cleared by admin)
+  saveLocal(KEY_WISHES, []);
+  return [];
 }
 
 async function renderWishes(fromNetwork = true) {
@@ -320,12 +322,11 @@ async function renderWishes(fromNetwork = true) {
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  // Always show cached/local first for zero perceived latency
-  let wishes = loadLocal(KEY_WISHES);
-  renderWishesDOM(wishes, display, empty);
-
   if (fromNetwork) {
-    wishes = await loadWishes();
+    const wishes = await loadWishes();
+    renderWishesDOM(wishes, display, empty);
+  } else {
+    const wishes = loadLocal(KEY_WISHES);
     renderWishesDOM(wishes, display, empty);
   }
 }
@@ -409,11 +410,13 @@ async function loadRSVP() {
     saveLocal(KEY_RSVP, list);
     return list;
   }
-  return loadLocal(KEY_RSVP);
+  // Server returned null (empty database / cleared by admin)
+  saveLocal(KEY_RSVP, []);
+  return [];
 }
 
 function updateStatsDOM(list) {
-  if (!Array.isArray(list)) return;
+  if (!Array.isArray(list)) list = [];
   const hadir = list.filter(r => r.status === 'hadir').length;
   const tidak = list.filter(r => r.status === 'tidak').length;
   animCount('count-hadir', hadir);
@@ -448,13 +451,12 @@ async function renderRSVP(fromNetwork = true) {
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
 
-  // Render from local cache first for instant response
-  let list = loadLocal(KEY_RSVP);
-  renderRSVPDOM(list, listEl, emptyEl);
-  updateStatsDOM(list);
-
   if (fromNetwork) {
-    list = await loadRSVP();
+    const list = await loadRSVP();
+    renderRSVPDOM(list, listEl, emptyEl);
+    updateStatsDOM(list);
+  } else {
+    const list = loadLocal(KEY_RSVP);
     renderRSVPDOM(list, listEl, emptyEl);
     updateStatsDOM(list);
   }
@@ -664,9 +666,29 @@ function startYTMusic() {
   }, 66);
 }
 
-// Keep backwards-compat alias used by dismissSplash
+// Reliable background music player (HTML5 native first for mobile, YouTube as backup)
 function playBgMusic() {
-  startYTMusic();
+  const audio = document.getElementById('bg-audio');
+  if (audio) {
+    audio.volume = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        // Fade in volume smoothly
+        let vol = 0;
+        const iv = setInterval(() => {
+          vol = Math.min(vol + 0.05, 0.75);
+          audio.volume = vol;
+          if (vol >= 0.75) clearInterval(iv);
+        }, 80);
+      }).catch((e) => {
+        console.log('[Audio] HTML5 audio blocked or error, falling back to YouTube:', e);
+        startYTMusic();
+      });
+    }
+  } else {
+    startYTMusic();
+  }
 }
 
 // ── Gift Modal Actions & Copy ────────────────────────────────────

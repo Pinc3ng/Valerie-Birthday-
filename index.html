@@ -272,9 +272,14 @@
   </footer>
 
 
-  <!-- ====== YOUTUBE BACKGROUND MUSIC ====== -->
-  <!-- Hidden YouTube player for background music -->
-  <div id="yt-player-wrap" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;" aria-hidden="true">
+  <!-- ====== BACKGROUND AUDIO ====== -->
+  <audio id="bg-audio" loop preload="auto" style="display:none;">
+    <source src="music.m4a" type="audio/mp4">
+    <source src="music.webm" type="audio/webm">
+  </audio>
+
+  <!-- YouTube Player Fallback -->
+  <div id="yt-player-wrap" style="position:fixed;bottom:0;right:0;width:200px;height:120px;opacity:0.001;pointer-events:none;z-index:-999;" aria-hidden="true">
     <div id="yt-player"></div>
   </div>
 
