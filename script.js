@@ -669,7 +669,7 @@ function playBgMusic() {
   startYTMusic();
 }
 
-// ── Gift Modal Actions ───────────────────────────────────────────
+// ── Gift Modal Actions & Copy ────────────────────────────────────
 function openGiftModal() {
   const modal = document.getElementById('gift-modal');
   if (modal) {
@@ -685,6 +685,41 @@ function closeGiftModal() {
     modal.classList.remove('show');
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+  }
+}
+
+function copyAccount(accNum, copiedId) {
+  const textToCopy = accNum || '0223233501';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      showCopiedToast(copiedId);
+    }).catch(() => {
+      fallbackCopy(textToCopy, copiedId);
+    });
+  } else {
+    fallbackCopy(textToCopy, copiedId);
+  }
+}
+
+function fallbackCopy(text, copiedId) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showCopiedToast(copiedId);
+  } catch {}
+  document.body.removeChild(ta);
+}
+
+function showCopiedToast(copiedId) {
+  const el = document.getElementById(copiedId || 'copied-bca');
+  if (el) {
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
   }
 }
 

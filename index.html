@@ -157,36 +157,16 @@
       <h3 class="gift-modal-title">Gift Registry Details</h3>
       <p class="gift-modal-subtitle">Your wishes and blessings are more than enough. But if you wish to send a gift, the details are below. Thank you! 🌸</p>
       
-      <div class="gift-grid">
+      <div class="gift-grid" style="max-width: 360px; margin: 1.5rem auto 0; grid-template-columns: 1fr;">
         <div class="gift-card" id="gift-card-bca">
           <div class="gift-bank-icon">🏦</div>
           <p class="gift-bank">Bank BCA</p>
           <p class="gift-owner">Vallerie Valencia</p>
           <div class="gift-num-box">
-            <span class="gift-num" id="bca-number">Coming Soon</span>
+            <span class="gift-num" id="bca-number">0223233501</span>
           </div>
-          <button class="gift-copy-btn" onclick="copyAccount('bca')" id="btn-bca">Copy Account Number</button>
+          <button class="gift-copy-btn" onclick="copyAccount('0223233501', 'copied-bca')" id="btn-bca">Copy Account Number</button>
           <span class="gift-copied" id="copied-bca">Copied ✓</span>
-        </div>
-        <div class="gift-card" id="gift-card-mandiri">
-          <div class="gift-bank-icon">🏦</div>
-          <p class="gift-bank">Bank Mandiri</p>
-          <p class="gift-owner">Vallerie Valencia</p>
-          <div class="gift-num-box">
-            <span class="gift-num" id="mandiri-number">Coming Soon</span>
-          </div>
-          <button class="gift-copy-btn" onclick="copyAccount('mandiri')" id="btn-mandiri">Copy Account Number</button>
-          <span class="gift-copied" id="copied-mandiri">Copied ✓</span>
-        </div>
-        <div class="gift-card" id="gift-card-gopay">
-          <div class="gift-bank-icon">💚</div>
-          <p class="gift-bank">GoPay · DANA</p>
-          <p class="gift-owner">Vallerie Valencia</p>
-          <div class="gift-num-box">
-            <span class="gift-num" id="gopay-number">Coming Soon</span>
-          </div>
-          <button class="gift-copy-btn" onclick="copyAccount('gopay')" id="btn-gopay">Copy Number</button>
-          <span class="gift-copied" id="copied-gopay">Copied ✓</span>
         </div>
       </div>
     </div>
