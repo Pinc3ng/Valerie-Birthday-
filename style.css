@@ -472,7 +472,7 @@ input, textarea { font-family: var(--sans); }
 
 .tab-panel > .section > .container {
   width: 100%;
-  padding-top: 40px;
+  padding-top: 100px;
   padding-bottom: var(--gap-xl);
 }
 
