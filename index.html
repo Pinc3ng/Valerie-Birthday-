@@ -54,12 +54,12 @@
   <!-- ====== NAV ====== -->
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <span class="nav-name">Vallerie's Birthday Party</span>
+      <span class="nav-name" onclick="switchTab(null)" style="cursor:pointer;">Vallerie's Birthday Party</span>
       <div class="nav-links">
-        <a href="#gift">Gift</a>
-        <a href="#wishes">Wishes</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#rsvp">Confirmation</a>
+        <a href="javascript:void(0)" data-tab="gift" onclick="switchTab('gift')">Gift</a>
+        <a href="javascript:void(0)" data-tab="wishes" onclick="switchTab('wishes')">Wishes</a>
+        <a href="javascript:void(0)" data-tab="gallery" onclick="switchTab('gallery')">Gallery</a>
+        <a href="javascript:void(0)" data-tab="rsvp" onclick="switchTab('rsvp')">Confirmation</a>
       </div>
     </div>
   </nav>
@@ -100,7 +100,7 @@
         </div>
       </div>
 
-      <a href="#rsvp" class="hero-btn">Confirm Attendance</a>
+      <a href="javascript:void(0)" class="hero-btn" onclick="switchTab('rsvp')">Confirm Attendance</a>
     </div>
     <div class="hero-scroll" aria-hidden="true">
       <span class="scroll-line"></span>
@@ -136,7 +136,11 @@
     </div>
   </section>
 
+  <!-- ====== TAB PANELS WRAPPER ====== -->
+  <div class="tab-panels-wrapper" id="tab-panels-wrapper">
+
   <!-- ====== GIFT ====== -->
+  <div class="tab-panel" data-panel="gift">
   <section class="section gift-section" id="gift">
     <div class="container">
       <p class="eyebrow">Send a Gift</p>
@@ -149,6 +153,7 @@
       </div>
     </div>
   </section>
+  </div><!-- /tab-panel gift -->
 
   <!-- ====== GIFT MODAL ====== -->
   <div class="gift-modal" id="gift-modal" aria-hidden="true">
@@ -174,6 +179,7 @@
   </div>
 
   <!-- ====== WISHES ====== -->
+  <div class="tab-panel" data-panel="wishes">
   <section class="section wishes-section" id="wishes">
     <div class="container">
       <p class="eyebrow">Leave a Message</p>
@@ -199,8 +205,10 @@
       <p class="wall-empty" id="wishes-empty">Be the first to leave a wish for Vallerie.</p>
     </div>
   </section>
+  </div><!-- /tab-panel wishes -->
 
   <!-- ====== GALLERY / MEMORIES ====== -->
+  <div class="tab-panel" data-panel="gallery">
   <section class="section gallery-section" id="gallery">
     <div class="container">
       <p class="eyebrow">Share Your Moments</p>
@@ -258,6 +266,7 @@
       <p class="wall-empty" id="gallery-empty">No memories shared yet. Be the first to upload! 📸</p>
     </div>
   </section>
+  </div><!-- /tab-panel gallery -->
 
   <!-- ====== GALLERY LIGHTBOX ====== -->
   <div class="gallery-lightbox" id="gallery-lightbox" aria-hidden="true">
@@ -272,6 +281,7 @@
   </div>
 
   <!-- ====== RSVP ====== -->
+  <div class="tab-panel" data-panel="rsvp">
   <section class="section rsvp-section" id="rsvp">
     <div class="container">
       <p class="eyebrow">Kindly Reply</p>
@@ -340,6 +350,9 @@
       </div>
     </div>
   </section>
+  </div><!-- /tab-panel rsvp -->
+
+  </div><!-- /tab-panels-wrapper -->
 
   <!-- ====== FOOTER ====== -->
   <footer class="footer">

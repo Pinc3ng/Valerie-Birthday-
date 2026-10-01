@@ -241,8 +241,74 @@ tick();
 // ── Nav scroll state ───────────────────────────────────────────────
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
-  if (nav) nav.classList.toggle('scrolled', window.scrollY > 60);
+  if (nav) nav.classList.toggle('scrolled', window.scrollY > 60 || currentTab !== null);
 }, { passive: true });
+
+// ── Tab Navigation System ──────────────────────────────────────────
+let currentTab = null;
+
+function switchTab(tabName) {
+  const panels = document.querySelectorAll('.tab-panel');
+  const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
+  const wrapper = document.getElementById('tab-panels-wrapper');
+  const heroEl = document.getElementById('home');
+  const countdownEl = document.getElementById('countdown');
+  const footer = document.querySelector('.footer');
+
+  // Update active nav link
+  navLinks.forEach(link => {
+    link.classList.toggle('active', link.getAttribute('data-tab') === tabName);
+  });
+
+  if (tabName === null) {
+    // Go back to home — show hero+countdown, hide all tabs
+    currentTab = null;
+    panels.forEach(p => p.classList.remove('active'));
+    if (heroEl) heroEl.style.display = '';
+    if (countdownEl) countdownEl.style.display = '';
+    if (footer) footer.style.display = '';
+    if (wrapper) wrapper.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Reset nav scroll state
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 60);
+    return;
+  }
+
+  currentTab = tabName;
+
+  // Hide hero + countdown, show tab wrapper
+  if (heroEl) heroEl.style.display = 'none';
+  if (countdownEl) countdownEl.style.display = 'none';
+  if (wrapper) wrapper.style.display = 'block';
+  if (footer) footer.style.display = '';
+
+  // Force nav scrolled state when viewing tabs
+  if (nav) nav.classList.add('scrolled');
+
+  // Switch panels
+  panels.forEach(p => {
+    if (p.getAttribute('data-panel') === tabName) {
+      p.classList.add('active');
+      // Re-trigger animation
+      p.style.animation = 'none';
+      p.offsetHeight; // force reflow
+      p.style.animation = '';
+    } else {
+      p.classList.remove('active');
+    }
+  });
+
+  // Scroll to top smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Re-trigger reveal animations for newly visible content
+  setTimeout(() => {
+    const revealEls = document.querySelectorAll('.tab-panel.active .reveal:not(.in)');
+    revealEls.forEach((el, i) => {
+      setTimeout(() => el.classList.add('in'), i * 70);
+    });
+  }, 100);
+}
 
 // ── Scroll reveal ──────────────────────────────────────────────────
 function initReveal() {
@@ -757,6 +823,10 @@ function showCopiedToast(copiedId) {
 
 // ── DOMContentLoaded Init ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Hide tab panels on load (show home view)
+  const tabWrapper = document.getElementById('tab-panels-wrapper');
+  if (tabWrapper) tabWrapper.style.display = 'none';
+
   renderWishes(true);
   renderRSVP(true);
   renderGallery(true);

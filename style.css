@@ -443,6 +443,49 @@ input, textarea { font-family: var(--sans); }
   text-align: center;
 }
 
+/* ── Tab Panels System ── */
+.tab-panels-wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+.tab-panel {
+  display: none;
+  animation: tabFadeIn 0.5s var(--ease) both;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab section should fill at least viewport height */
+.tab-panel > .section {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  align-items: flex-start;
+}
+
+.tab-panel > .section > .container {
+  width: 100%;
+  padding-top: 40px;
+  padding-bottom: var(--gap-xl);
+}
+
+/* Active nav link indicator */
+.nav-links a.active {
+  color: var(--burgundy);
+  font-weight: 500;
+}
+
+.nav-links a.active::after {
+  transform: scaleX(1);
+}
+
 .eyebrow {
   font-family: var(--display);
   font-size: 0.60rem;
