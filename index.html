@@ -58,6 +58,7 @@
       <div class="nav-links">
         <a href="#gift">Gift</a>
         <a href="#wishes">Wishes</a>
+        <a href="#gallery">Gallery</a>
         <a href="#rsvp">Confirmation</a>
       </div>
     </div>
@@ -198,6 +199,77 @@
       <p class="wall-empty" id="wishes-empty">Be the first to leave a wish for Vallerie.</p>
     </div>
   </section>
+
+  <!-- ====== GALLERY / MEMORIES ====== -->
+  <section class="section gallery-section" id="gallery">
+    <div class="container">
+      <p class="eyebrow">Share Your Moments</p>
+      <h2 class="section-heading">Gallery</h2>
+      <p class="section-body">Capture and share the beautiful moments from the celebration. Upload your photos and videos so everyone can relive the memories together.</p>
+
+      <!-- Upload Form -->
+      <div class="form-wrapper gallery-upload-wrapper">
+        <form id="gallery-form" onsubmit="submitGallery(event)">
+          <div class="field">
+            <label for="gallery-name">Your Name</label>
+            <input type="text" id="gallery-name" placeholder="Enter your name" required maxlength="50" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label>Upload Photo or Video</label>
+            <div class="gallery-dropzone" id="gallery-dropzone">
+              <input type="file" id="gallery-file" accept="image/*,video/*" required hidden />
+              <div class="dropzone-content" id="dropzone-content">
+                <div class="dropzone-icon">
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect x="4" y="8" width="40" height="32" rx="6" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <circle cx="16" cy="20" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M4 32 L16 22 L24 30 L32 20 L44 32" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>
+                    <path d="M24 8V2M24 2L20 6M24 2L28 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <p class="dropzone-text">Drag & drop your file here</p>
+                <p class="dropzone-hint">or click to browse · Max 10 MB</p>
+                <p class="dropzone-formats">JPG, PNG, WEBP, MP4, MOV</p>
+              </div>
+              <!-- Preview after file selected -->
+              <div class="dropzone-preview" id="dropzone-preview" style="display:none;">
+                <img id="preview-img" style="display:none;" alt="Preview" />
+                <video id="preview-vid" style="display:none;" muted></video>
+                <button type="button" class="preview-remove" id="preview-remove" aria-label="Remove file">×</button>
+                <p class="preview-filename" id="preview-filename"></p>
+              </div>
+            </div>
+          </div>
+          <div class="gallery-upload-info">
+            <span class="upload-info-icon">ℹ️</span>
+            <span>Photos & videos are shared publicly with all guests.</span>
+          </div>
+          <button type="submit" class="form-btn" id="submit-gallery">Upload Memory ✦</button>
+          <!-- Upload Progress -->
+          <div class="upload-progress" id="upload-progress" style="display:none;">
+            <div class="upload-progress-bar" id="upload-progress-bar"></div>
+            <span class="upload-progress-text" id="upload-progress-text">Uploading...</span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div class="gallery-grid" id="gallery-grid"></div>
+      <p class="wall-empty" id="gallery-empty">No memories shared yet. Be the first to upload! 📸</p>
+    </div>
+  </section>
+
+  <!-- ====== GALLERY LIGHTBOX ====== -->
+  <div class="gallery-lightbox" id="gallery-lightbox" aria-hidden="true">
+    <div class="lightbox-overlay" onclick="closeLightbox()"></div>
+    <div class="lightbox-content">
+      <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">×</button>
+      <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)" aria-label="Previous">‹</button>
+      <div class="lightbox-media" id="lightbox-media"></div>
+      <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)" aria-label="Next">›</button>
+      <div class="lightbox-info" id="lightbox-info"></div>
+    </div>
+  </div>
 
   <!-- ====== RSVP ====== -->
   <section class="section rsvp-section" id="rsvp">
