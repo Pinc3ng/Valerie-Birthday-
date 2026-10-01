@@ -486,6 +486,21 @@ input, textarea { font-family: var(--sans); }
   transform: scaleX(1);
 }
 
+/* Home nav link */
+.nav-home-link {
+  position: relative;
+  padding-right: var(--gap-sm) !important;
+  margin-right: 4px;
+}
+
+.nav-home-link::before {
+  content: '⌂';
+  margin-right: 4px;
+  font-size: 0.7rem;
+  vertical-align: middle;
+  opacity: 0.75;
+}
+
 .eyebrow {
   font-family: var(--display);
   font-size: 0.60rem;
