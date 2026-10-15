@@ -845,6 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLiveSync();
   initReveal();
   initGalleryUpload();
+  updateGalleryUploadLock();
 
   // Check if this browser already submitted RSVP
   const doneEntry = getRSVPDone();
@@ -899,6 +900,27 @@ let galleryVisibleCount = 16;
 let gallerySelectedFile = null;
 let galleryItems = [];
 let lightboxSortedIdx = 0;
+
+// ── Gallery Lock Config (Dibuka saat Hari H: 24 Oktober 2026) ─────────
+const GALLERY_EVENT_DATE = new Date('2026-10-24T00:00:00+07:00');
+const FORCE_OPEN_GALLERY_UPLOAD = false; // Ubah ke true jika ingin membuka sekarang
+
+function isGalleryUploadOpen() {
+  return FORCE_OPEN_GALLERY_UPLOAD || (Date.now() >= GALLERY_EVENT_DATE.getTime());
+}
+
+function updateGalleryUploadLock() {
+  const uploadWrap = document.getElementById('gallery-upload-wrapper');
+  const closedCard = document.getElementById('gallery-closed-card');
+  const isOpen = isGalleryUploadOpen();
+
+  if (uploadWrap) {
+    uploadWrap.style.display = isOpen ? 'block' : 'none';
+  }
+  if (closedCard) {
+    closedCard.style.display = isOpen ? 'none' : 'block';
+  }
+}
 
 // ── Gallery Upload UI Setup ─────────────────────────────────────────
 function initGalleryUpload() {
@@ -1047,6 +1069,11 @@ async function submitGallery(e) {
   const progressWrap = document.getElementById('upload-progress');
   const progressBar  = document.getElementById('upload-progress-bar');
   const progressText = document.getElementById('upload-progress-text');
+
+  if (!isGalleryUploadOpen()) {
+    alert('Upload foto & video baru dibuka pada hari H (24 Oktober 2026)! 🌸');
+    return;
+  }
 
   if (!nameEl || !btn || !gallerySelectedFile) {
     if (!gallerySelectedFile) alert('Please select a photo or video to upload.');

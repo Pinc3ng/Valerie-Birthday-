@@ -216,8 +216,20 @@
       <h2 class="section-heading">Gallery</h2>
       <p class="section-body">Capture and share the beautiful moments from the celebration. Upload your photos and videos so everyone can relive the memories together.</p>
 
+      <!-- Gallery Upload Closed Notice (Sampai Hari H) -->
+      <div class="gallery-closed-card" id="gallery-closed-card">
+        <div class="closed-badge">Upcoming ✦</div>
+        <div class="closed-icon">📸 ✨</div>
+        <h3 class="closed-title">Upload Dibuka Saat Hari H</h3>
+        <p class="closed-desc">
+          Fitur upload foto & video kenangan akan dibuka pada hari perayaan<br>
+          <strong>Sabtu, 24 Oktober 2026</strong>.
+        </p>
+        <p class="closed-note">Abadikan dan bagikan momen bahagiamu bersama Vallerie nanti ya! 🌸</p>
+      </div>
+
       <!-- Upload Form -->
-      <div class="form-wrapper gallery-upload-wrapper">
+      <div class="form-wrapper gallery-upload-wrapper" id="gallery-upload-wrapper" style="display:none;">
         <form id="gallery-form" onsubmit="submitGallery(event)">
           <div class="field">
             <label for="gallery-name">Your Name</label>
