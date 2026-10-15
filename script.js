@@ -873,17 +873,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ================================================================
-//   GALLERY / MEMORIES — Upload, Render, Lightbox, Live Sync
+//   GALLERY / MEMORIES — Cloudinary CDN + Firebase Live Sync
 // ================================================================
 
-const KEY_GALLERY = 'vv_gallery_v1';
-const MAX_FILE_SIZE = 10 * 1024 * 1024;       // 10 MB raw limit
-const MAX_IMG_DIMENSION = 1200;                 // resize images to max 1200px
-const IMG_QUALITY = 0.72;                       // JPEG compression quality
-const MAX_VID_SIZE_B64 = 5 * 1024 * 1024;      // 5 MB base64 limit for video
+const KEY_GALLERY = 'vv_gallery_v2';
+const CLOUDINARY_CLOUD_NAME = 'ma5jhjtt';
+const CLOUDINARY_UPLOAD_PRESET = 'valerie_gallery';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB limit for photos & videos
+const GALLERY_PAGE_SIZE = 16;
+let galleryVisibleCount = 16;
 let gallerySelectedFile = null;
 let galleryItems = [];
-let lightboxIdx = 0;
+let lightboxSortedIdx = 0;
 
 // ── Gallery Upload UI Setup ─────────────────────────────────────────
 function initGalleryUpload() {
@@ -939,7 +942,6 @@ function initGalleryUpload() {
   }
 
   function handleFileSelect(file) {
-    // Validate type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
     if (!isImage && !isVideo) {
@@ -947,9 +949,8 @@ function initGalleryUpload() {
       return;
     }
 
-    // Validate size
     if (file.size > MAX_FILE_SIZE) {
-      alert('File is too large. Maximum size is 10 MB.');
+      alert('File is too large. Maximum size is 50 MB.');
       return;
     }
 
@@ -986,85 +987,43 @@ function initGalleryUpload() {
     if (previewName) previewName.textContent = '';
   }
 
-  // Expose clearFilePreview globally
   window._clearGalleryPreview = clearFilePreview;
 }
 
-// ── Compress Image ───────────────────────────────────────────────────
-function compressImage(file) {
+// ── Upload directly to Cloudinary with real progress ────────────────
+function uploadToCloudinary(file, onProgress) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    fd.append('file', file);
 
-    reader.onload = (e) => {
-      img.onload = () => {
-        let { width, height } = img;
+    xhr.open('POST', CLOUDINARY_UPLOAD_URL);
 
-        // Resize if needed
-        if (width > MAX_IMG_DIMENSION || height > MAX_IMG_DIMENSION) {
-          if (width > height) {
-            height = Math.round(height * MAX_IMG_DIMENSION / width);
-            width = MAX_IMG_DIMENSION;
-          } else {
-            width = Math.round(width * MAX_IMG_DIMENSION / height);
-            height = MAX_IMG_DIMENSION;
-          }
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          onProgress(pct);
         }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const dataUrl = canvas.toDataURL('image/jpeg', IMG_QUALITY);
-        resolve(dataUrl);
       };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+    }
 
-// ── Generate Video Thumbnail ────────────────────────────────────────
-function generateVideoThumbnail(file) {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.muted = true;
-    video.preload = 'metadata';
-
-    video.onloadeddata = () => {
-      video.currentTime = Math.min(1, video.duration * 0.25);
+    xhr.onload = () => {
+      try {
+        const resp = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && resp.secure_url) {
+          resolve(resp);
+        } else {
+          reject(new Error((resp.error && resp.error.message) || 'Upload failed'));
+        }
+      } catch (err) {
+        reject(err);
+      }
     };
 
-    video.onseeked = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.min(video.videoWidth, 640);
-      canvas.height = Math.round(canvas.width * video.videoHeight / video.videoWidth);
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const thumb = canvas.toDataURL('image/jpeg', 0.6);
-      URL.revokeObjectURL(video.src);
-      resolve(thumb);
-    };
-
-    video.onerror = () => {
-      resolve(null);
-    };
-
-    video.src = URL.createObjectURL(file);
-  });
-}
-
-// ── Convert file to base64 data URL ─────────────────────────────────
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(fd);
   });
 }
 
@@ -1086,57 +1045,41 @@ async function submitGallery(e) {
   if (!name) return;
 
   const file = gallerySelectedFile;
-  const isImage = file.type.startsWith('image/');
   const isVideo = file.type.startsWith('video/');
 
   btn.disabled = true;
-  btn.textContent = 'Processing...';
+  btn.textContent = 'Uploading...';
 
-  // Show progress
   if (progressWrap) progressWrap.style.display = 'block';
-  setProgress(10, 'Processing...');
+  setProgress(5, 'Connecting to cloud...');
 
   try {
-    let mediaData, thumbnail, mediaType;
+    // Direct upload to Cloudinary CDN
+    const uploadRes = await uploadToCloudinary(file, (pct) => {
+      setProgress(Math.min(95, pct), `Uploading ${pct}%...`);
+    });
 
-    if (isImage) {
-      mediaType = 'image';
-      setProgress(30, 'Compressing image...');
-      mediaData = await compressImage(file);
-      thumbnail = null;
-      setProgress(60, 'Uploading...');
-    } else if (isVideo) {
-      mediaType = 'video';
-      setProgress(20, 'Generating thumbnail...');
-      thumbnail = await generateVideoThumbnail(file);
-      setProgress(40, 'Processing video...');
+    setProgress(96, 'Saving memory...');
 
-      // Convert video to base64
-      mediaData = await fileToDataUrl(file);
-
-      // Check size after base64 encoding
-      if (mediaData.length > MAX_VID_SIZE_B64) {
-        alert('Video is too large after processing. Please use a shorter or smaller video (max ~3.5 MB).');
-        resetUploadUI();
-        return;
-      }
-      setProgress(60, 'Uploading...');
-    } else {
-      alert('Unsupported file type.');
-      resetUploadUI();
-      return;
+    // Cloudinary auto-generates optimized thumbnail
+    let thumbUrl = uploadRes.secure_url;
+    if (isVideo) {
+      thumbUrl = uploadRes.secure_url.replace(/\.[^/.]+$/, ".jpg");
+    } else if (thumbUrl.includes('/image/upload/')) {
+      thumbUrl = thumbUrl.replace('/image/upload/', '/image/upload/w_600,c_fill,q_auto,f_auto/');
     }
 
     const entry = {
       name,
-      mediaType,
-      mediaData,
-      thumbnail: thumbnail || null,
+      mediaType: isVideo ? 'video' : 'image',
+      mediaUrl: uploadRes.secure_url,
+      thumbnail: thumbUrl,
       timestamp: Date.now(),
       fileName: file.name
     };
 
-    setProgress(70, 'Saving to cloud...');
+    // Push to Firebase RTDB (lightweight URL only, ~150 bytes!)
+    await fbPost('gallery', entry);
 
     // Optimistic local update
     const local = loadLocal(KEY_GALLERY);
@@ -1144,10 +1087,6 @@ async function submitGallery(e) {
     saveLocal(KEY_GALLERY, local);
     galleryItems = local;
     renderGalleryDOM();
-
-    // Push to Firebase
-    setProgress(85, 'Syncing...');
-    await fbPost('gallery', entry);
 
     setProgress(100, 'Done!');
 
@@ -1166,12 +1105,12 @@ async function submitGallery(e) {
       }, 2000);
     }, 500);
 
-    // Sync fresh state
+    // Sync fresh state from Firebase
     await renderGallery(true);
 
   } catch (err) {
     console.error('[Gallery] Upload error:', err);
-    alert('Upload failed. Please try again.');
+    alert('Upload failed: ' + (err.message || 'Please check your connection and try again.'));
     resetUploadUI();
   }
 
@@ -1196,8 +1135,7 @@ async function loadGallery() {
     saveLocal(KEY_GALLERY, list);
     return list;
   }
-  saveLocal(KEY_GALLERY, []);
-  return [];
+  return loadLocal(KEY_GALLERY);
 }
 
 async function renderGallery(fromNetwork = true) {
@@ -1212,31 +1150,39 @@ async function renderGallery(fromNetwork = true) {
 function renderGalleryDOM() {
   const grid  = document.getElementById('gallery-grid');
   const empty = document.getElementById('gallery-empty');
+  const loadMoreWrap = document.getElementById('gallery-load-more-wrap');
+  const loadMoreBtn  = document.getElementById('gallery-load-more');
   if (!grid) return;
 
   grid.innerHTML = '';
 
   if (!galleryItems || galleryItems.length === 0) {
     if (empty) empty.style.display = 'block';
+    if (loadMoreWrap) loadMoreWrap.style.display = 'none';
     return;
   }
   if (empty) empty.style.display = 'none';
 
-  // Show newest first
-  [...galleryItems].reverse().forEach((item, i) => {
+  // Newest first
+  const sorted = [...galleryItems].reverse();
+  const total = sorted.length;
+  const visibleList = sorted.slice(0, galleryVisibleCount);
+
+  visibleList.forEach((item, i) => {
     const card = document.createElement('div');
     card.className = 'gallery-card';
-    card.style.animationDelay = (i * 0.06) + 's';
-    card.onclick = () => openLightbox(galleryItems.length - 1 - i);
+    card.style.animationDelay = (Math.min(i, 16) * 0.04) + 's';
+    card.onclick = () => openLightbox(i);
 
     const isVideo = item.mediaType === 'video';
+    const mediaSrc = item.mediaUrl || item.mediaData || '';
+    const thumbSrc = item.thumbnail || (isVideo ? mediaSrc.replace(/\.[^/.]+$/, ".jpg") : mediaSrc);
 
     let mediaHTML;
     if (isVideo) {
-      const thumbSrc = item.thumbnail || '';
       mediaHTML = `
         <div class="gallery-card-media">
-          ${thumbSrc ? `<img src="${thumbSrc}" alt="Video thumbnail" />` : `<div style="width:100%;height:100%;background:var(--blush-light);display:flex;align-items:center;justify-content:center;"><span style="font-size:2rem;">🎬</span></div>`}
+          ${thumbSrc ? `<img src="${thumbSrc}" alt="Video thumbnail" loading="lazy" />` : `<div style="width:100%;height:100%;background:var(--blush-light);display:flex;align-items:center;justify-content:center;"><span style="font-size:2rem;">🎬</span></div>`}
           <div class="gallery-card-play">
             <div class="gallery-card-play-icon">
               <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
@@ -1248,7 +1194,7 @@ function renderGalleryDOM() {
     } else {
       mediaHTML = `
         <div class="gallery-card-media">
-          <img src="${item.mediaData}" alt="Photo by ${esc(item.name)}" loading="lazy" />
+          <img src="${thumbSrc}" alt="Photo by ${esc(item.name)}" loading="lazy" />
         </div>
       `;
     }
@@ -1256,18 +1202,41 @@ function renderGalleryDOM() {
     card.innerHTML = `
       ${mediaHTML}
       <div class="gallery-card-info">
-        <p class="gallery-card-name">${esc(item.name)}</p>
-        <p class="gallery-card-time">${fmtDate(item.timestamp)}</p>
+        <div class="gallery-card-meta">
+          <p class="gallery-card-name">${esc(item.name)}</p>
+          <p class="gallery-card-time">${fmtDate(item.timestamp)}</p>
+        </div>
+        <button type="button" class="gallery-card-download-btn" onclick="event.stopPropagation(); downloadMediaByIndex(${i})" title="Download ${isVideo ? 'Video' : 'Photo'}" aria-label="Download ${isVideo ? 'video' : 'photo'}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download</span>
+        </button>
       </div>
     `;
 
     grid.appendChild(card);
   });
+
+  // Handle Load More Button
+  if (loadMoreWrap && loadMoreBtn) {
+    if (galleryVisibleCount < total) {
+      const remaining = total - galleryVisibleCount;
+      loadMoreWrap.style.display = 'flex';
+      loadMoreBtn.innerHTML = `Load More Memories (${remaining} remaining) ✦`;
+    } else {
+      loadMoreWrap.style.display = 'none';
+    }
+  }
 }
 
+function loadMoreGallery() {
+  galleryVisibleCount += GALLERY_PAGE_SIZE;
+  renderGalleryDOM();
+}
+window.loadMoreGallery = loadMoreGallery;
+
 // ── Lightbox ────────────────────────────────────────────────────────
-function openLightbox(idx) {
-  lightboxIdx = idx;
+function openLightbox(sortedIdx) {
+  lightboxSortedIdx = sortedIdx;
   const lightbox = document.getElementById('gallery-lightbox');
   if (!lightbox) return;
 
@@ -1276,7 +1245,6 @@ function openLightbox(idx) {
   lightbox.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 
-  // Keyboard navigation
   document.addEventListener('keydown', lightboxKeyHandler);
 }
 
@@ -1288,7 +1256,6 @@ function closeLightbox() {
   lightbox.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 
-  // Stop any playing video
   const vid = lightbox.querySelector('video');
   if (vid) { vid.pause(); vid.src = ''; }
 
@@ -1297,7 +1264,8 @@ function closeLightbox() {
 
 function lightboxNav(dir) {
   if (!galleryItems.length) return;
-  lightboxIdx = (lightboxIdx + dir + galleryItems.length) % galleryItems.length;
+  const total = galleryItems.length;
+  lightboxSortedIdx = (lightboxSortedIdx + dir + total) % total;
   renderLightboxContent();
 }
 
@@ -1310,22 +1278,107 @@ function lightboxKeyHandler(e) {
 function renderLightboxContent() {
   const mediaEl = document.getElementById('lightbox-media');
   const infoEl  = document.getElementById('lightbox-info');
-  if (!mediaEl || !galleryItems[lightboxIdx]) return;
+  const sorted = [...galleryItems].reverse();
+  const item = sorted[lightboxSortedIdx];
+  if (!mediaEl || !item) return;
 
-  const item = galleryItems[lightboxIdx];
   const isVideo = item.mediaType === 'video';
+  const mediaSrc = item.mediaUrl || item.mediaData || '';
 
   if (isVideo) {
-    mediaEl.innerHTML = `<video src="${item.mediaData}" controls autoplay style="max-width:85vw;max-height:75vh;border-radius:16px;box-shadow:0 16px 80px rgba(0,0,0,0.5);"></video>`;
+    mediaEl.innerHTML = `<video src="${mediaSrc}" controls autoplay playsinline style="max-width:85vw;max-height:75vh;border-radius:16px;box-shadow:0 16px 80px rgba(0,0,0,0.5);"></video>`;
   } else {
-    mediaEl.innerHTML = `<img src="${item.mediaData}" alt="Photo by ${esc(item.name)}" />`;
+    mediaEl.innerHTML = `<img src="${mediaSrc}" alt="Photo by ${esc(item.name)}" />`;
   }
 
   if (infoEl) {
     infoEl.innerHTML = `
-      <p class="lightbox-info-name">${esc(item.name)}</p>
-      <p class="lightbox-info-time">${fmtDate(item.timestamp)}</p>
+      <div class="lightbox-info-meta">
+        <p class="lightbox-info-name">${esc(item.name)}</p>
+        <p class="lightbox-info-time">${fmtDate(item.timestamp)}</p>
+      </div>
+      <button type="button" class="lightbox-save-btn" onclick="downloadCurrentMedia()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Save ${isVideo ? 'Video' : 'Photo'} 💾</span>
+      </button>
     `;
   }
 }
+
+// ── Media Download / Save Helpers ───────────────────────────────────
+function getAttachmentUrl(url) {
+  if (!url) return '';
+  if (url.includes('/upload/') && !url.includes('fl_attachment')) {
+    return url.replace('/upload/', '/upload/fl_attachment/');
+  }
+  return url;
+}
+
+function triggerDownload(url, filename) {
+  if (!url) return;
+
+  // Base64 fallback (if any legacy data exists)
+  if (url.startsWith('data:')) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'valerie-sweet17-memory';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => document.body.removeChild(a), 200);
+    return;
+  }
+
+  const downloadUrl = getAttachmentUrl(url);
+
+  // Fetch as blob for instant native download
+  fetch(downloadUrl)
+    .then(res => {
+      if (!res.ok) throw new Error('Fetch failed');
+      return res.blob();
+    })
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'valerie-sweet17-memory';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 500);
+    })
+    .catch(() => {
+      // Fallback: direct anchor with attachment header
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename || 'valerie-sweet17-memory';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 300);
+    });
+}
+
+function downloadMediaByIndex(sortedIdx) {
+  const sorted = [...galleryItems].reverse();
+  const item = sorted[sortedIdx];
+  if (!item) return;
+
+  const isVideo = item.mediaType === 'video';
+  const url = item.mediaUrl || item.mediaData;
+  const ext = isVideo ? 'mp4' : 'jpg';
+  const safeName = (item.name || 'memory').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `valerie_sweet17_${safeName}_${item.timestamp || Date.now()}.${ext}`;
+
+  triggerDownload(url, filename);
+}
+window.downloadMediaByIndex = downloadMediaByIndex;
+
+function downloadCurrentMedia() {
+  downloadMediaByIndex(lightboxSortedIdx);
+}
+window.downloadCurrentMedia = downloadCurrentMedia;
+
+
 

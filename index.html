@@ -237,7 +237,7 @@
                   </svg>
                 </div>
                 <p class="dropzone-text">Drag & drop your file here</p>
-                <p class="dropzone-hint">or click to browse · Max 10 MB</p>
+                <p class="dropzone-hint">or click to browse · Photos & Videos up to 50 MB</p>
                 <p class="dropzone-formats">JPG, PNG, WEBP, MP4, MOV</p>
               </div>
               <!-- Preview after file selected -->
@@ -264,6 +264,12 @@
 
       <!-- Gallery Grid -->
       <div class="gallery-grid" id="gallery-grid"></div>
+      
+      <!-- Gallery Load More Button -->
+      <div class="gallery-load-more-wrap" id="gallery-load-more-wrap" style="display:none;">
+        <button type="button" class="form-btn gallery-load-more-btn" id="gallery-load-more" onclick="loadMoreGallery()">Load More Memories ✦</button>
+      </div>
+
       <p class="wall-empty" id="gallery-empty">No memories shared yet. Be the first to upload! 📸</p>
     </div>
   </section>
@@ -274,6 +280,10 @@
     <div class="lightbox-overlay" onclick="closeLightbox()"></div>
     <div class="lightbox-content">
       <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">×</button>
+      <button class="lightbox-download-top" onclick="downloadCurrentMedia()" title="Download Memory" aria-label="Download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Download</span>
+      </button>
       <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)" aria-label="Previous">‹</button>
       <div class="lightbox-media" id="lightbox-media"></div>
       <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)" aria-label="Next">›</button>

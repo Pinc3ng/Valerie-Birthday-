@@ -1471,7 +1471,16 @@ input, textarea { font-family: var(--sans); }
 
 /* Card footer info */
 .gallery-card-info {
-  padding: 14px 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gallery-card-meta {
+  flex: 1;
+  min-width: 0;
 }
 
 .gallery-card-name {
@@ -1480,7 +1489,10 @@ input, textarea { font-family: var(--sans); }
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--rose);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gallery-card-time {
@@ -1488,6 +1500,59 @@ input, textarea { font-family: var(--sans); }
   font-size: 0.48rem;
   letter-spacing: 0.10em;
   color: var(--text-muted);
+}
+
+.gallery-card-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--r-full);
+  background: rgba(122, 27, 62, 0.08);
+  border: 1px solid rgba(122, 27, 62, 0.22);
+  color: var(--burgundy);
+  font-family: var(--display);
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.gallery-card-download-btn:hover {
+  background: linear-gradient(135deg, var(--rose), var(--burgundy));
+  color: white;
+  border-color: transparent;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 14px rgba(90, 14, 40, 0.28);
+}
+
+/* ── Gallery Load More Button ── */
+.gallery-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--gap-lg);
+  margin-bottom: var(--gap-sm);
+  width: 100%;
+}
+
+.gallery-load-more-btn {
+  max-width: 340px;
+  padding: 13px 28px;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  border-radius: var(--r-full);
+  box-shadow: 0 4px 20px rgba(122, 27, 62, 0.18);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.gallery-load-more-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(122, 27, 62, 0.28);
 }
 
 /* ================================================================
@@ -1561,6 +1626,37 @@ input, textarea { font-family: var(--sans); }
   transform: rotate(90deg) scale(1.1);
 }
 
+.lightbox-download-top {
+  position: fixed;
+  top: 20px;
+  right: 80px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: white;
+  font-family: var(--display);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.lightbox-download-top:hover {
+  background: linear-gradient(135deg, var(--rose), var(--burgundy));
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
 .lightbox-nav {
   position: fixed;
   top: 50%;
@@ -1612,15 +1708,24 @@ input, textarea { font-family: var(--sans); }
 }
 
 .lightbox-info {
-  margin-top: 16px;
-  text-align: center;
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.lightbox-info-meta {
+  text-align: left;
 }
 
 .lightbox-info-name {
   font-family: var(--script);
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 4px;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 2px;
 }
 
 .lightbox-info-time {
@@ -1628,7 +1733,34 @@ input, textarea { font-family: var(--sans); }
   font-size: 0.50rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.lightbox-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, var(--rose), var(--burgundy));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: white;
+  font-family: var(--display);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.lightbox-save-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(212, 175, 110, 0.45);
+}
+
+.lightbox-save-btn svg {
+  flex-shrink: 0;
 }
 
 /* ── Responsive ── */
