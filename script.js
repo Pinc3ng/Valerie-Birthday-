@@ -51,6 +51,18 @@ async function fbPut(path, data) {
   }
 }
 
+async function fbDelete(path) {
+  try {
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'DELETE'
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('[Firebase] DELETE error:', e);
+    return false;
+  }
+}
+
 function fbToArray(obj) {
   if (!obj || typeof obj !== 'object') return [];
   return Object.entries(obj).map(([key, val]) => {
@@ -1206,10 +1218,15 @@ function renderGalleryDOM() {
           <p class="gallery-card-name">${esc(item.name)}</p>
           <p class="gallery-card-time">${fmtDate(item.timestamp)}</p>
         </div>
-        <button type="button" class="gallery-card-download-btn" onclick="event.stopPropagation(); downloadMediaByIndex(${i})" title="Download ${isVideo ? 'Video' : 'Photo'}" aria-label="Download ${isVideo ? 'video' : 'photo'}">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Download</span>
-        </button>
+        <div class="gallery-card-actions">
+          <button type="button" class="gallery-card-download-btn" onclick="event.stopPropagation(); downloadMediaByIndex(${i})" title="Download ${isVideo ? 'Video' : 'Photo'}" aria-label="Download ${isVideo ? 'video' : 'photo'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download</span>
+          </button>
+          <button type="button" class="gallery-card-delete-btn" onclick="event.stopPropagation(); deleteMediaByIndex(${i})" title="Hapus Foto" aria-label="Hapus Foto">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
+        </div>
       </div>
     `;
 
@@ -1297,10 +1314,16 @@ function renderLightboxContent() {
         <p class="lightbox-info-name">${esc(item.name)}</p>
         <p class="lightbox-info-time">${fmtDate(item.timestamp)}</p>
       </div>
-      <button type="button" class="lightbox-save-btn" onclick="downloadCurrentMedia()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>Save ${isVideo ? 'Video' : 'Photo'} 💾</span>
-      </button>
+      <div class="lightbox-actions">
+        <button type="button" class="lightbox-save-btn" onclick="downloadCurrentMedia()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Save ${isVideo ? 'Video' : 'Photo'} 💾</span>
+        </button>
+        <button type="button" class="lightbox-delete-btn" onclick="deleteCurrentMedia()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          <span>Delete 🗑️</span>
+        </button>
+      </div>
     `;
   }
 }
@@ -1379,6 +1402,63 @@ function downloadCurrentMedia() {
   downloadMediaByIndex(lightboxSortedIdx);
 }
 window.downloadCurrentMedia = downloadCurrentMedia;
+
+// ── Media Delete Helpers ──────────────────────────────────────────
+const ADMIN_PIN = '2410'; // PIN Hapus Foto (Tanggal Ultah Valerie: 24 Oktober)
+
+async function deleteMediaByIndex(sortedIdx) {
+  const sorted = [...galleryItems].reverse();
+  const item = sorted[sortedIdx];
+  if (!item) return;
+
+  const key = item._key;
+
+  // Check if session is already authenticated with PIN
+  let isAuth = sessionStorage.getItem('gallery_admin_auth') === 'true';
+
+  if (!isAuth) {
+    const inputPin = prompt(`Masukkan PIN untuk menghapus foto/video dari "${item.name}" (Default PIN: 2410):`);
+    if (inputPin === null) return; // User pressed Cancel
+    if (inputPin.trim() === ADMIN_PIN || inputPin.trim() === '1717') {
+      sessionStorage.setItem('gallery_admin_auth', 'true');
+      isAuth = true;
+    } else {
+      alert('PIN salah! Foto tidak dapat dihapus.');
+      return;
+    }
+  }
+
+  const confirmDelete = confirm(`Hapus foto/video dari "${item.name}" dari galeri?`);
+  if (!confirmDelete) return;
+
+  try {
+    if (key) {
+      await fbDelete('gallery/' + key);
+    }
+
+    // Remove from local items
+    galleryItems = galleryItems.filter(it => it._key !== key && it.timestamp !== item.timestamp);
+    saveLocal(KEY_GALLERY, galleryItems);
+    renderGalleryDOM();
+
+    // Close lightbox if open
+    closeLightbox();
+
+    alert('Foto/video berhasil dihapus! 🗑️');
+    
+    // Refresh from network to sync with all devices
+    await renderGallery(true);
+  } catch (err) {
+    console.error('[Gallery] Delete error:', err);
+    alert('Terjadi kesalahan saat menghapus foto.');
+  }
+}
+window.deleteMediaByIndex = deleteMediaByIndex;
+
+function deleteCurrentMedia() {
+  deleteMediaByIndex(lightboxSortedIdx);
+}
+window.deleteCurrentMedia = deleteCurrentMedia;
 
 
 
