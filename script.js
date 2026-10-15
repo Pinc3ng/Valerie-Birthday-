@@ -1071,7 +1071,7 @@ async function submitGallery(e) {
   const progressText = document.getElementById('upload-progress-text');
 
   if (!isGalleryUploadOpen()) {
-    alert('Upload foto & video baru dibuka pada hari H (24 Oktober 2026)! 🌸');
+    alert('Photo & video sharing will officially open on the day of celebration (October 24, 2026)! 🌸');
     return;
   }
 
@@ -1438,7 +1438,7 @@ async function deleteMediaByIndex(sortedIdx) {
 
   const key = item._key;
 
-  const confirmDelete = confirm(`Hapus foto/video dari "${item.name}" dari galeri?`);
+  const confirmDelete = confirm(`Are you sure you want to delete this memory from "${item.name}"?`);
   if (!confirmDelete) return;
 
   try {
@@ -1454,13 +1454,13 @@ async function deleteMediaByIndex(sortedIdx) {
     // Close lightbox if open
     closeLightbox();
 
-    alert('Foto/video berhasil dihapus! 🗑️');
+    alert('Memory deleted successfully! 🗑️');
     
     // Refresh from network to sync with all devices
     await renderGallery(true);
   } catch (err) {
     console.error('[Gallery] Delete error:', err);
-    alert('Terjadi kesalahan saat menghapus foto.');
+    alert('An error occurred while deleting. Please try again.');
   }
 }
 window.deleteMediaByIndex = deleteMediaByIndex;
