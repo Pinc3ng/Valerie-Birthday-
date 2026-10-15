@@ -1404,29 +1404,12 @@ function downloadCurrentMedia() {
 window.downloadCurrentMedia = downloadCurrentMedia;
 
 // ── Media Delete Helpers ──────────────────────────────────────────
-const ADMIN_PIN = '2410'; // PIN Hapus Foto (Tanggal Ultah Valerie: 24 Oktober)
-
 async function deleteMediaByIndex(sortedIdx) {
   const sorted = [...galleryItems].reverse();
   const item = sorted[sortedIdx];
   if (!item) return;
 
   const key = item._key;
-
-  // Check if session is already authenticated with PIN
-  let isAuth = sessionStorage.getItem('gallery_admin_auth') === 'true';
-
-  if (!isAuth) {
-    const inputPin = prompt(`Masukkan PIN untuk menghapus foto/video dari "${item.name}" (Default PIN: 2410):`);
-    if (inputPin === null) return; // User pressed Cancel
-    if (inputPin.trim() === ADMIN_PIN || inputPin.trim() === '1717') {
-      sessionStorage.setItem('gallery_admin_auth', 'true');
-      isAuth = true;
-    } else {
-      alert('PIN salah! Foto tidak dapat dihapus.');
-      return;
-    }
-  }
 
   const confirmDelete = confirm(`Hapus foto/video dari "${item.name}" dari galeri?`);
   if (!confirmDelete) return;
