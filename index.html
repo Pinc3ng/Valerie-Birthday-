@@ -213,7 +213,7 @@
   <section class="section gallery-section" id="gallery">
     <div class="container">
       <p class="eyebrow">Share Your Moments</p>
-      <h2 class="section-heading">Gallery</h2>
+      <h2 class="section-heading" id="gallery-heading">Gallery</h2>
       <p class="section-body">Capture and share the beautiful moments from the celebration. Upload your photos and videos so everyone can relive the memories together.</p>
 
       <!-- Gallery Upload Closed Notice (Until Celebration Day) -->
@@ -236,9 +236,9 @@
             <input type="text" id="gallery-name" placeholder="Enter your name" required maxlength="50" autocomplete="off" />
           </div>
           <div class="field">
-            <label>Upload Photo or Video</label>
+            <label>Upload Photos or Videos</label>
             <div class="gallery-dropzone" id="gallery-dropzone">
-              <input type="file" id="gallery-file" accept="image/*,video/*" required hidden />
+              <input type="file" id="gallery-file" accept="image/*,video/*" multiple hidden />
               <div class="dropzone-content" id="dropzone-content">
                 <div class="dropzone-icon">
                   <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -248,24 +248,28 @@
                     <path d="M24 8V2M24 2L20 6M24 2L28 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <p class="dropzone-text">Drag & drop your file here</p>
-                <p class="dropzone-hint">or click to browse · Photos & Videos up to 50 MB</p>
+                <p class="dropzone-text">Drag & drop photos or videos here</p>
+                <p class="dropzone-hint">or click to browse · Select multiple files (up to 50 MB each)</p>
                 <p class="dropzone-formats">JPG, PNG, WEBP, MP4, MOV</p>
               </div>
-              <!-- Preview after file selected -->
+              <!-- Preview after files selected -->
               <div class="dropzone-preview" id="dropzone-preview" style="display:none;">
-                <img id="preview-img" style="display:none;" alt="Preview" />
-                <video id="preview-vid" style="display:none;" muted></video>
-                <button type="button" class="preview-remove" id="preview-remove" aria-label="Remove file">×</button>
-                <p class="preview-filename" id="preview-filename"></p>
+                <div class="dropzone-preview-header">
+                  <span class="preview-count-badge" id="preview-count-badge">0 files selected</span>
+                  <div class="preview-header-actions">
+                    <button type="button" class="preview-add-more-btn" id="preview-add-more" title="Add more photos or videos">+ Add More</button>
+                    <button type="button" class="preview-clear-all-btn" id="preview-clear-all" title="Clear all selected files">Clear All</button>
+                  </div>
+                </div>
+                <div class="dropzone-previews-grid" id="preview-grid"></div>
               </div>
             </div>
           </div>
           <div class="gallery-upload-info">
             <span class="upload-info-icon">ℹ️</span>
-            <span>Photos & videos are shared publicly with all guests.</span>
+            <span>Photos & videos are shared publicly with all guests. You can delete your own uploads anytime.</span>
           </div>
-          <button type="submit" class="form-btn" id="submit-gallery">Upload Memory ✦</button>
+          <button type="submit" class="form-btn" id="submit-gallery">Upload Memories ✦</button>
           <!-- Upload Progress -->
           <div class="upload-progress" id="upload-progress" style="display:none;">
             <div class="upload-progress-bar" id="upload-progress-bar"></div>
@@ -315,7 +319,7 @@
       <div class="stats-row">
         <div class="stat">
           <span class="stat-num" id="count-hadir">0</span>
-          <span class="stat-lbl">Attending</span>
+          <span class="stat-lbl">Guests Attending</span>
         </div>
         <div class="stat">
           <span class="stat-num" id="count-tidak">0</span>
@@ -323,7 +327,7 @@
         </div>
         <div class="stat">
           <span class="stat-num" id="count-total">0</span>
-          <span class="stat-lbl">Total Replies</span>
+          <span class="stat-lbl">Total Responses</span>
         </div>
       </div>
 
@@ -367,7 +371,7 @@
 
       <!-- Guest List -->
       <div class="guest-list-wrap">
-        <h3 class="guest-list-title">Guest List</h3>
+        <h3 class="guest-list-title" id="guest-list-title">Guest List</h3>
         <div class="guest-list" id="rsvp-list"></div>
         <p class="wall-empty" id="rsvp-empty">No replies yet. Be the first to confirm.</p>
       </div>

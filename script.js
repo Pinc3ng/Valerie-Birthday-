@@ -395,18 +395,19 @@ async function loadWishes() {
   return [];
 }
 
+let lastWishesHash = '';
+
 async function renderWishes(fromNetwork = true) {
   const display = document.getElementById('wishes-display');
   const empty   = document.getElementById('wishes-empty');
   if (!display) return;
 
-  if (fromNetwork) {
-    const wishes = await loadWishes();
-    renderWishesDOM(wishes, display, empty);
-  } else {
-    const wishes = loadLocal(KEY_WISHES);
-    renderWishesDOM(wishes, display, empty);
-  }
+  const wishes = fromNetwork ? await loadWishes() : loadLocal(KEY_WISHES);
+  const hash = JSON.stringify(wishes);
+  if (hash === lastWishesHash && display.children.length > 0) return;
+  lastWishesHash = hash;
+
+  renderWishesDOM(wishes, display, empty);
 }
 
 function renderWishesDOM(wishes, display, empty) {
@@ -497,9 +498,10 @@ function updateStatsDOM(list) {
   if (!Array.isArray(list)) list = [];
   const hadir = list.filter(r => r.status === 'hadir').reduce((sum, r) => sum + (parseInt(r.pax, 10) || 1), 0);
   const tidak = list.filter(r => r.status === 'tidak').length;
+  const totalReplies = list.length;
   animCount('count-hadir', hadir);
   animCount('count-tidak', tidak);
-  animCount('count-total', hadir + tidak);
+  animCount('count-total', totalReplies);
 }
 
 function animCount(id, target) {
@@ -524,20 +526,20 @@ function animCount(id, target) {
   }, 35);
 }
 
+let lastRSVPHash = '';
+
 async function renderRSVP(fromNetwork = true) {
   const listEl  = document.getElementById('rsvp-list');
   const emptyEl = document.getElementById('rsvp-empty');
   if (!listEl) return;
 
-  if (fromNetwork) {
-    const list = await loadRSVP();
-    renderRSVPDOM(list, listEl, emptyEl);
-    updateStatsDOM(list);
-  } else {
-    const list = loadLocal(KEY_RSVP);
-    renderRSVPDOM(list, listEl, emptyEl);
-    updateStatsDOM(list);
-  }
+  const list = fromNetwork ? await loadRSVP() : loadLocal(KEY_RSVP);
+  const hash = JSON.stringify(list);
+  if (hash === lastRSVPHash && listEl.children.length > 0) return;
+  lastRSVPHash = hash;
+
+  renderRSVPDOM(list, listEl, emptyEl);
+  updateStatsDOM(list);
 }
 
 function renderRSVPDOM(list, listEl, emptyEl) {
@@ -545,9 +547,17 @@ function renderRSVPDOM(list, listEl, emptyEl) {
   listEl.innerHTML = '';
   if (!list || list.length === 0) {
     if (emptyEl) emptyEl.style.display = 'block';
+    const titleEl = document.getElementById('guest-list-title');
+    if (titleEl) titleEl.textContent = 'Guest List';
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
+
+  const hadirPax = list.filter(r => r.status === 'hadir').reduce((sum, r) => sum + (parseInt(r.pax, 10) || 1), 0);
+  const titleEl = document.getElementById('guest-list-title');
+  if (titleEl) {
+    titleEl.textContent = `Guest List (${hadirPax} Guests Attending)`;
+  }
 
   [...list].reverse().forEach((r, i) => {
     const row = document.createElement('div');
@@ -679,12 +689,12 @@ function initLiveSync() {
   connectSSE('wishes', () => renderWishes(true));
   connectSSE('gallery', () => renderGallery(true));
 
-  // 2. Periodic Polling fallback (every 7 seconds)
+  // 2. Periodic Polling fallback (every 60 seconds / 1 minute)
   setInterval(() => {
     renderRSVP(true);
     renderWishes(true);
     renderGallery(true);
-  }, 7000);
+  }, 60000);
 
   // 3. Tab Visibility / Focus refresh (when returning from mobile sleep / another tab)
   document.addEventListener('visibilitychange', () => {
@@ -890,16 +900,61 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================================================================
 
 const KEY_GALLERY = 'vv_gallery_v2';
+const KEY_MY_UPLOADS = 'vv_my_gallery_keys_v2';
+const KEY_UPLOADER_TOKEN = 'vv_uploader_token_v2';
 const CLOUDINARY_CLOUD_NAME = 'ma5jhjtt';
 const CLOUDINARY_UPLOAD_PRESET = 'valerie_gallery';
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB limit for photos & videos
+const MAX_BATCH_FILES = 20; // Max 20 files per batch
 const GALLERY_PAGE_SIZE = 16;
 let galleryVisibleCount = 16;
-let gallerySelectedFile = null;
+let gallerySelectedFiles = [];
 let galleryItems = [];
 let lightboxSortedIdx = 0;
+
+// ── Ownership / Permission Helpers ─────────────────────────────────
+function getUploaderToken() {
+  let token = localStorage.getItem(KEY_UPLOADER_TOKEN);
+  if (!token) {
+    token = 'up_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
+    try { localStorage.setItem(KEY_UPLOADER_TOKEN, token); } catch {}
+  }
+  return token;
+}
+
+function getMyUploadKeys() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY_MY_UPLOADS)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMyUploadKey(keyOrId) {
+  if (!keyOrId) return;
+  const keys = getMyUploadKeys();
+  if (!keys.includes(keyOrId)) {
+    keys.push(keyOrId);
+    try { localStorage.setItem(KEY_MY_UPLOADS, JSON.stringify(keys)); } catch {}
+  }
+}
+
+function isMyMemory(item) {
+  if (!item) return false;
+  if (sessionStorage.getItem('gallery_admin_mode') === 'true') return true;
+
+  const myToken = getUploaderToken();
+  if (item.uploaderToken && item.uploaderToken === myToken) return true;
+
+  const myKeys = getMyUploadKeys();
+  if (item._key && myKeys.includes(item._key)) return true;
+  if (item.timestamp && myKeys.includes(item.timestamp)) return true;
+  if (item.mediaUrl && myKeys.includes(item.mediaUrl)) return true;
+
+  return false;
+}
 
 // ── Gallery Lock Config (Dibuka saat Hari H: 24 Oktober 2026) ─────────
 const GALLERY_EVENT_DATE = new Date('2026-10-24T00:00:00+07:00');
@@ -922,24 +977,72 @@ function updateGalleryUploadLock() {
   }
 }
 
-// ── Gallery Upload UI Setup ─────────────────────────────────────────
+// ── Gallery Upload UI Setup (Multi-File Drag & Drop + Previews) ─────
 function initGalleryUpload() {
   const dropzone    = document.getElementById('gallery-dropzone');
   const fileInput   = document.getElementById('gallery-file');
   const previewWrap = document.getElementById('dropzone-preview');
   const content     = document.getElementById('dropzone-content');
-  const previewImg  = document.getElementById('preview-img');
-  const previewVid  = document.getElementById('preview-vid');
-  const previewName = document.getElementById('preview-filename');
-  const removeBtn   = document.getElementById('preview-remove');
+  const previewGrid = document.getElementById('preview-grid');
+  const countBadge  = document.getElementById('preview-count-badge');
+  const addMoreBtn  = document.getElementById('preview-add-more');
+  const clearAllBtn = document.getElementById('preview-clear-all');
+  const submitBtn   = document.getElementById('submit-gallery');
+  const heading     = document.getElementById('gallery-heading');
+
+  // Secret admin moderation mode trigger (5 clicks on Gallery heading)
+  if (heading) {
+    let clickCount = 0;
+    let clickTimer = null;
+    heading.style.cursor = 'pointer';
+    heading.addEventListener('click', () => {
+      clickCount++;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => { clickCount = 0; }, 2500);
+      if (clickCount >= 5) {
+        clickCount = 0;
+        const currentAdmin = sessionStorage.getItem('gallery_admin_mode') === 'true';
+        if (currentAdmin) {
+          sessionStorage.removeItem('gallery_admin_mode');
+          alert('Admin moderation mode turned OFF.');
+          renderGalleryDOM();
+        } else {
+          const pin = prompt('Enter Admin PIN to manage memories:');
+          if (pin === '2410' || pin === '1717') {
+            sessionStorage.setItem('gallery_admin_mode', 'true');
+            alert('Admin moderation mode activated! You can now manage all memories.');
+            renderGalleryDOM();
+          } else if (pin !== null) {
+            alert('Incorrect PIN.');
+          }
+        }
+      }
+    });
+  }
 
   if (!dropzone || !fileInput) return;
 
-  // Click to browse
+  // Click to browse (ignoring internal action buttons)
   dropzone.addEventListener('click', (e) => {
-    if (e.target.closest('.preview-remove')) return;
+    if (e.target.closest('#preview-add-more') || e.target.closest('#preview-clear-all') || e.target.closest('.preview-item-remove')) return;
     fileInput.click();
   });
+
+  // Add more files button
+  if (addMoreBtn) {
+    addMoreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+  }
+
+  // Clear all button
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearFilePreview();
+    });
+  }
 
   // Drag & Drop
   ['dragenter', 'dragover'].forEach(evt => {
@@ -960,65 +1063,113 @@ function initGalleryUpload() {
 
   dropzone.addEventListener('drop', (e) => {
     const files = e.dataTransfer.files;
-    if (files.length > 0) handleFileSelect(files[0]);
+    if (files && files.length > 0) handleFilesSelected(files);
   });
 
   fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) handleFileSelect(fileInput.files[0]);
+    if (fileInput.files && fileInput.files.length > 0) handleFilesSelected(fileInput.files);
+    fileInput.value = ''; // Reset input value so same files can be re-selected if removed
   });
 
-  // Remove preview
-  if (removeBtn) {
-    removeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearFilePreview();
+  function handleFilesSelected(fileList) {
+    const incoming = Array.from(fileList);
+    if (!incoming.length) return;
+
+    const validFiles = [];
+    for (const file of incoming) {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      if (!isImage && !isVideo) {
+        alert(`File "${file.name}" is not an image or video and was skipped.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File "${file.name}" exceeds the 50 MB limit and was skipped.`);
+        continue;
+      }
+      const already = gallerySelectedFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+      if (!already) {
+        validFiles.push(file);
+      }
+    }
+
+    if (gallerySelectedFiles.length + validFiles.length > MAX_BATCH_FILES) {
+      alert(`You can upload a maximum of ${MAX_BATCH_FILES} files at once.`);
+      const remainingSlots = Math.max(0, MAX_BATCH_FILES - gallerySelectedFiles.length);
+      validFiles.splice(remainingSlots);
+    }
+
+    gallerySelectedFiles = gallerySelectedFiles.concat(validFiles);
+    renderPreviews();
+  }
+
+  function renderPreviews() {
+    if (!previewGrid || !content || !previewWrap) return;
+
+    if (gallerySelectedFiles.length === 0) {
+      content.style.display = 'flex';
+      previewWrap.style.display = 'none';
+      previewGrid.innerHTML = '';
+      if (submitBtn) submitBtn.textContent = 'Upload Memories ✦';
+      return;
+    }
+
+    content.style.display = 'none';
+    previewWrap.style.display = 'flex';
+    previewGrid.innerHTML = '';
+
+    const count = gallerySelectedFiles.length;
+    if (countBadge) {
+      countBadge.textContent = `${count} ${count === 1 ? 'file' : 'files'} selected`;
+    }
+    if (submitBtn) {
+      submitBtn.textContent = `Upload ${count} ${count === 1 ? 'Memory' : 'Memories'} ✦`;
+    }
+
+    gallerySelectedFiles.forEach((file, idx) => {
+      const isVideo = file.type.startsWith('video/');
+      const card = document.createElement('div');
+      card.className = 'preview-card';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'preview-item-remove';
+      removeBtn.innerHTML = '×';
+      removeBtn.title = `Remove ${file.name}`;
+      removeBtn.setAttribute('aria-label', `Remove ${file.name}`);
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        gallerySelectedFiles.splice(idx, 1);
+        renderPreviews();
+      };
+
+      if (isVideo) {
+        const vid = document.createElement('video');
+        vid.src = URL.createObjectURL(file);
+        vid.muted = true;
+        vid.playsInline = true;
+        card.appendChild(vid);
+
+        const badge = document.createElement('span');
+        badge.className = 'preview-video-badge';
+        badge.textContent = '🎬 Video';
+        card.appendChild(badge);
+      } else {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = file.name;
+        card.appendChild(img);
+      }
+
+      card.appendChild(removeBtn);
+      previewGrid.appendChild(card);
     });
   }
 
-  function handleFileSelect(file) {
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-    if (!isImage && !isVideo) {
-      alert('Please select an image or video file.');
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      alert('File is too large. Maximum size is 50 MB.');
-      return;
-    }
-
-    gallerySelectedFile = file;
-
-    // Show preview
-    if (content) content.style.display = 'none';
-    if (previewWrap) previewWrap.style.display = 'flex';
-
-    if (isImage) {
-      previewImg.style.display = 'block';
-      previewVid.style.display = 'none';
-      const reader = new FileReader();
-      reader.onload = (e) => { previewImg.src = e.target.result; };
-      reader.readAsDataURL(file);
-    } else {
-      previewImg.style.display = 'none';
-      previewVid.style.display = 'block';
-      previewVid.src = URL.createObjectURL(file);
-    }
-
-    if (previewName) previewName.textContent = file.name;
-  }
-
   function clearFilePreview() {
-    gallerySelectedFile = null;
+    gallerySelectedFiles = [];
     fileInput.value = '';
-    if (content) content.style.display = 'flex';
-    if (previewWrap) previewWrap.style.display = 'none';
-    previewImg.style.display = 'none';
-    previewImg.src = '';
-    previewVid.style.display = 'none';
-    previewVid.src = '';
-    if (previewName) previewName.textContent = '';
+    renderPreviews();
   }
 
   window._clearGalleryPreview = clearFilePreview;
@@ -1061,7 +1212,7 @@ function uploadToCloudinary(file, onProgress) {
   });
 }
 
-// ── Submit Gallery Upload ───────────────────────────────────────────
+// ── Submit Gallery Upload (Batch Multi-File) ────────────────────────
 async function submitGallery(e) {
   e.preventDefault();
   const nameEl = document.getElementById('gallery-name');
@@ -1075,94 +1226,106 @@ async function submitGallery(e) {
     return;
   }
 
-  if (!nameEl || !btn || !gallerySelectedFile) {
-    if (!gallerySelectedFile) alert('Please select a photo or video to upload.');
+  if (!nameEl || !btn || !gallerySelectedFiles.length) {
+    if (!gallerySelectedFiles.length) alert('Please select at least one photo or video to upload.');
     return;
   }
 
   const name = nameEl.value.trim();
   if (!name) return;
 
-  const file = gallerySelectedFile;
-  const isVideo = file.type.startsWith('video/');
-
+  const total = gallerySelectedFiles.length;
   btn.disabled = true;
-  btn.textContent = 'Uploading...';
+  btn.textContent = `Uploading 1 of ${total}...`;
 
   if (progressWrap) progressWrap.style.display = 'block';
-  setProgress(5, 'Connecting to cloud...');
+  setProgress(2, `Starting upload (0 of ${total})...`);
 
-  try {
-    // Direct upload to Cloudinary CDN
-    const uploadRes = await uploadToCloudinary(file, (pct) => {
-      setProgress(Math.min(95, pct), `Uploading ${pct}%...`);
-    });
+  const uploaderToken = getUploaderToken();
+  let successCount = 0;
+  const failedFiles = [];
 
-    setProgress(96, 'Saving memory...');
+  for (let i = 0; i < total; i++) {
+    const file = gallerySelectedFiles[i];
+    const isVideo = file.type.startsWith('video/');
+    const fileBasePct = (i / total) * 100;
+    const fileWeight = 100 / total;
 
-    // Cloudinary auto-generates optimized thumbnail
-    let thumbUrl = uploadRes.secure_url;
-    if (isVideo) {
-      thumbUrl = uploadRes.secure_url.replace(/\.[^/.]+$/, ".jpg");
-    } else if (thumbUrl.includes('/image/upload/')) {
-      thumbUrl = thumbUrl.replace('/image/upload/', '/image/upload/w_600,c_fill,q_auto,f_auto/');
+    try {
+      setProgress(Math.round(fileBasePct + 2), `Uploading ${i + 1} of ${total}: ${file.name}...`);
+
+      const uploadRes = await uploadToCloudinary(file, (pct) => {
+        const overall = Math.round(fileBasePct + ((pct / 100) * fileWeight));
+        setProgress(Math.min(95, overall), `Uploading ${i + 1} of ${total} (${pct}%)...`);
+      });
+
+      // Optimized thumbnail
+      let thumbUrl = uploadRes.secure_url;
+      if (isVideo) {
+        thumbUrl = uploadRes.secure_url.replace(/\.[^/.]+$/, ".jpg");
+      } else if (thumbUrl.includes('/image/upload/')) {
+        thumbUrl = thumbUrl.replace('/image/upload/', '/image/upload/w_600,c_fill,q_auto,f_auto/');
+      }
+
+      const entry = {
+        name,
+        mediaType: isVideo ? 'video' : 'image',
+        mediaUrl: uploadRes.secure_url,
+        thumbnail: thumbUrl,
+        timestamp: Date.now() + i,
+        fileName: file.name,
+        uploaderToken: uploaderToken
+      };
+
+      // Push to Firebase RTDB
+      const fbRes = await fbPost('gallery', entry);
+      const assignedKey = fbRes && fbRes.name ? fbRes.name : null;
+      if (assignedKey) entry._key = assignedKey;
+
+      // Track ownership locally
+      saveMyUploadKey(assignedKey);
+      saveMyUploadKey(entry.mediaUrl);
+      saveMyUploadKey(entry.timestamp);
+
+      // Optimistic local add
+      const local = loadLocal(KEY_GALLERY);
+      local.push(entry);
+      saveLocal(KEY_GALLERY, local);
+      galleryItems = local;
+
+      successCount++;
+    } catch (fileErr) {
+      console.error(`[Gallery] Error uploading ${file.name}:`, fileErr);
+      failedFiles.push(file.name);
     }
+  }
 
-    const entry = {
-      name,
-      mediaType: isVideo ? 'video' : 'image',
-      mediaUrl: uploadRes.secure_url,
-      thumbnail: thumbUrl,
-      timestamp: Date.now(),
-      fileName: file.name
-    };
+  // Done processing all files
+  renderGalleryDOM();
+  setProgress(100, `Completed! ${successCount} of ${total} uploaded.`);
 
-    // Push to Firebase RTDB (lightweight URL only, ~150 bytes!)
-    await fbPost('gallery', entry);
+  if (window._clearGalleryPreview) window._clearGalleryPreview();
 
-    // Optimistic local update
-    const local = loadLocal(KEY_GALLERY);
-    local.push(entry);
-    saveLocal(KEY_GALLERY, local);
-    galleryItems = local;
-    renderGalleryDOM();
-
-    setProgress(100, 'Done!');
-
-    // Reset form
-    nameEl.value = '';
-    gallerySelectedFile = null;
-    if (window._clearGalleryPreview) window._clearGalleryPreview();
-
+  setTimeout(() => {
+    btn.textContent = `Uploaded ${successCount} ${successCount === 1 ? 'Memory' : 'Memories'} ✓`;
     setTimeout(() => {
-      btn.textContent = 'Uploaded ✓';
-      setTimeout(() => {
-        btn.textContent = 'Upload Memory ✦';
-        btn.disabled = false;
-        if (progressWrap) progressWrap.style.display = 'none';
-        setProgress(0, 'Uploading...');
-      }, 2000);
-    }, 500);
+      btn.textContent = 'Upload Memories ✦';
+      btn.disabled = false;
+      if (progressWrap) progressWrap.style.display = 'none';
+      setProgress(0, 'Uploading...');
+    }, 2500);
+  }, 600);
 
-    // Sync fresh state from Firebase
-    await renderGallery(true);
+  lastGalleryHash = ''; // Invalidate dirty-check so renderGallery updates
+  await renderGallery(true);
 
-  } catch (err) {
-    console.error('[Gallery] Upload error:', err);
-    alert('Upload failed: ' + (err.message || 'Please check your connection and try again.'));
-    resetUploadUI();
+  if (failedFiles.length > 0) {
+    alert(`${successCount} file(s) uploaded successfully. However, ${failedFiles.length} file(s) failed: ${failedFiles.join(', ')}.`);
   }
 
   function setProgress(pct, text) {
     if (progressBar)  progressBar.style.width = pct + '%';
     if (progressText) progressText.textContent = text;
-  }
-
-  function resetUploadUI() {
-    btn.textContent = 'Upload Memory ✦';
-    btn.disabled = false;
-    if (progressWrap) progressWrap.style.display = 'none';
-    if (progressBar) progressBar.style.width = '0%';
   }
 }
 
@@ -1177,12 +1340,19 @@ async function loadGallery() {
   return loadLocal(KEY_GALLERY);
 }
 
+let lastGalleryHash = '';
+
 async function renderGallery(fromNetwork = true) {
   if (fromNetwork) {
     galleryItems = await loadGallery();
   } else {
     galleryItems = loadLocal(KEY_GALLERY);
   }
+  const hash = JSON.stringify(galleryItems ? galleryItems.map(i => i.id || i.public_id || i.mediaUrl || i.timestamp) : []);
+  const grid = document.getElementById('gallery-grid');
+  if (hash === lastGalleryHash && grid && grid.children.length > 0) return;
+  lastGalleryHash = hash;
+
   renderGalleryDOM();
 }
 
@@ -1238,6 +1408,13 @@ function renderGalleryDOM() {
       `;
     }
 
+    const canDelete = isMyMemory(item);
+    const deleteBtnHTML = canDelete ? `
+      <button type="button" class="gallery-card-delete-btn" onclick="event.stopPropagation(); deleteMediaByIndex(${i})" title="Hapus Foto Saya" aria-label="Hapus Foto">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
+    ` : '';
+
     card.innerHTML = `
       ${mediaHTML}
       <div class="gallery-card-info">
@@ -1250,9 +1427,7 @@ function renderGalleryDOM() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Download</span>
           </button>
-          <button type="button" class="gallery-card-delete-btn" onclick="event.stopPropagation(); deleteMediaByIndex(${i})" title="Hapus Foto" aria-label="Hapus Foto">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-          </button>
+          ${deleteBtnHTML}
         </div>
       </div>
     `;
@@ -1336,6 +1511,14 @@ function renderLightboxContent() {
   }
 
   if (infoEl) {
+    const canDelete = isMyMemory(item);
+    const deleteBtnHTML = canDelete ? `
+      <button type="button" class="lightbox-delete-btn" onclick="deleteCurrentMedia()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        <span>Delete 🗑️</span>
+      </button>
+    ` : '';
+
     infoEl.innerHTML = `
       <div class="lightbox-info-meta">
         <p class="lightbox-info-name">${esc(item.name)}</p>
@@ -1346,10 +1529,7 @@ function renderLightboxContent() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Save ${isVideo ? 'Video' : 'Photo'} 💾</span>
         </button>
-        <button type="button" class="lightbox-delete-btn" onclick="deleteCurrentMedia()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-          <span>Delete 🗑️</span>
-        </button>
+        ${deleteBtnHTML}
       </div>
     `;
   }
@@ -1436,31 +1616,41 @@ async function deleteMediaByIndex(sortedIdx) {
   const item = sorted[sortedIdx];
   if (!item) return;
 
-  const key = item._key;
+  if (!isMyMemory(item)) {
+    alert('Kamu hanya bisa menghapus foto atau video yang kamu upload sendiri. 🔒');
+    return;
+  }
 
-  const confirmDelete = confirm(`Are you sure you want to delete this memory from "${item.name}"?`);
+  const confirmDelete = confirm(`Hapus kenangan dari "${item.name}" dari galeri?`);
   if (!confirmDelete) return;
+
+  const key = item._key;
 
   try {
     if (key) {
       await fbDelete('gallery/' + key);
     }
 
+    // Clean from local ownership keys
+    const keys = getMyUploadKeys().filter(k => k !== key && k !== item.timestamp && k !== item.mediaUrl);
+    try { localStorage.setItem(KEY_MY_UPLOADS, JSON.stringify(keys)); } catch {}
+
     // Remove from local items
     galleryItems = galleryItems.filter(it => it._key !== key && it.timestamp !== item.timestamp);
     saveLocal(KEY_GALLERY, galleryItems);
+    lastGalleryHash = '';
     renderGalleryDOM();
 
     // Close lightbox if open
     closeLightbox();
 
-    alert('Memory deleted successfully! 🗑️');
+    alert('Foto/video berhasil dihapus dari galeri! 🗑️');
     
     // Refresh from network to sync with all devices
     await renderGallery(true);
   } catch (err) {
     console.error('[Gallery] Delete error:', err);
-    alert('An error occurred while deleting. Please try again.');
+    alert('Terjadi kesalahan saat menghapus. Silakan coba lagi.');
   }
 }
 window.deleteMediaByIndex = deleteMediaByIndex;
