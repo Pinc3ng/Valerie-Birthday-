@@ -574,6 +574,9 @@ function renderRSVPDOM(list, listEl, emptyEl) {
   });
 }
 
+// ── RSVP Lock Config (Ditutup karena acara sudah terlaksana pada 24 Oktober 2026) ──
+const RSVP_CLOSED = true;
+
 // ── RSVP Already-Submitted Key ───────────────────────────────────
 const KEY_RSVP_DONE = 'vv_rsvp_done_v2';
 
@@ -596,18 +599,41 @@ function showRSVPConfirmed(entry) {
       <div class="rsvp-done-icon">${isHadir ? '🎉' : '💌'}</div>
       <p class="rsvp-done-title">Thank you, ${esc(entry.name)}!</p>
       <p class="rsvp-done-status">
-        You have confirmed as
+        Your attendance was recorded as
         <span class="rsvp-done-badge ${isHadir ? 'hadir' : 'tidak'}">
-          ${isHadir ? 'Attending' + paxText + ' ✦' : 'Not Attending'}
+          ${isHadir ? 'Attended' + paxText + ' ✦' : 'Unable to Attend'}
         </span>
       </p>
-      <p class="rsvp-done-note">Your response has been recorded. We look forward to celebrating with you! 🌸</p>
+      <p class="rsvp-done-note">The celebration took place on October 24, 2026. Thank you for being a part of Valerie's Sweet 17! 🌸</p>
+    </div>
+  `;
+}
+
+function showRSVPClosed() {
+  const wrapper = document.getElementById('rsvp-form-wrapper');
+  if (!wrapper) return;
+  wrapper.innerHTML = `
+    <div class="rsvp-closed-card" id="rsvp-closed-card">
+      <div class="closed-badge">RSVP Closed ✦</div>
+      <div class="rsvp-closed-icon">🥂 ✨</div>
+      <h3 class="rsvp-closed-title">Thank You For Celebrating With Valerie!</h3>
+      <p class="rsvp-closed-desc">
+        RSVP is now officially closed as Valerie's Sweet 17 celebration took place on<br>
+        <strong>Saturday, 24 October 2026</strong>.
+      </p>
+      <p class="rsvp-closed-sub">
+        We are deeply grateful for the presence, love, and joy shared by all our dear family and friends! 🌸
+      </p>
     </div>
   `;
 }
 
 async function submitRSVP(e) {
   e.preventDefault();
+  if (RSVP_CLOSED) {
+    alert('RSVP has officially closed as the event date has passed (October 24, 2026). Thank you! 🌸');
+    return;
+  }
   const nameEl   = document.getElementById('rsvp-name');
   const statusEl = document.querySelector('input[name="rsvp-status"]:checked');
   const paxEl    = document.getElementById('rsvp-pax');
@@ -859,7 +885,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Check if this browser already submitted RSVP
   const doneEntry = getRSVPDone();
-  if (doneEntry) showRSVPConfirmed(doneEntry);
+  if (doneEntry) {
+    showRSVPConfirmed(doneEntry);
+  } else if (RSVP_CLOSED) {
+    showRSVPClosed();
+  }
 
   // Toggle Number of Guests field based on attendance selection
   const hadirRadio = document.getElementById('rsvp-hadir');

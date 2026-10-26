@@ -101,7 +101,7 @@
         </div>
       </div>
 
-      <a href="javascript:void(0)" class="hero-btn" onclick="switchTab('rsvp')">Confirm Attendance</a>
+      <a href="javascript:void(0)" class="hero-btn" onclick="switchTab('rsvp')">View Guest List & RSVP</a>
     </div>
     <div class="hero-scroll" aria-hidden="true">
       <span class="scroll-line"></span>
@@ -311,9 +311,9 @@
   <div class="tab-panel" data-panel="rsvp">
   <section class="section rsvp-section" id="rsvp">
     <div class="container">
-      <p class="eyebrow">Kindly Reply</p>
+      <p class="eyebrow">Celebration Concluded</p>
       <h2 class="section-heading">RSVP</h2>
-      <p class="section-body">We warmly look forward to celebrating with you. Please confirm your attendance below.</p>
+      <p class="section-body">Valerie's Sweet 17 celebration took place on October 24, 2026. Thank you to everyone for your attendance, warm wishes, and wonderful memories!</p>
 
       <!-- Stats -->
       <div class="stats-row">
@@ -331,42 +331,20 @@
         </div>
       </div>
 
-      <!-- Form -->
+      <!-- Closed Notice / Form Wrapper -->
       <div class="form-wrapper" id="rsvp-form-wrapper">
-        <form id="rsvp-form" onsubmit="submitRSVP(event)">
-          <div class="field">
-            <label for="rsvp-name">Full Name</label>
-            <input type="text" id="rsvp-name" placeholder="Enter your full name" required maxlength="60" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label>Attendance</label>
-            <div class="rsvp-choices">
-              <label class="choice" id="choice-hadir">
-                <input type="radio" name="rsvp-status" value="hadir" id="rsvp-hadir" required />
-                <span class="choice-box">
-                  <span class="choice-mark"></span>
-                  <span class="choice-label">I will attend</span>
-                </span>
-              </label>
-              <label class="choice" id="choice-tidak">
-                <input type="radio" name="rsvp-status" value="tidak" id="rsvp-tidak" />
-                <span class="choice-box">
-                  <span class="choice-mark"></span>
-                  <span class="choice-label">Unable to attend</span>
-                </span>
-              </label>
-            </div>
-          </div>
-          <div class="field" id="field-rsvp-pax">
-            <label for="rsvp-pax">Number of Guests</label>
-            <select id="rsvp-pax" name="rsvp-pax">
-              <option value="1">1 Person</option>
-              <option value="2">2 People</option>
-              <option value="3">3 People</option>
-            </select>
-          </div>
-          <button type="submit" class="form-btn" id="submit-rsvp">Confirm ✦</button>
-        </form>
+        <div class="rsvp-closed-card" id="rsvp-closed-card">
+          <div class="closed-badge">RSVP Closed ✦</div>
+          <div class="rsvp-closed-icon">🥂 ✨</div>
+          <h3 class="rsvp-closed-title">Thank You For Celebrating With Valerie!</h3>
+          <p class="rsvp-closed-desc">
+            RSVP is now officially closed as Valerie's Sweet 17 celebration took place on<br>
+            <strong>Saturday, 24 October 2026</strong>.
+          </p>
+          <p class="rsvp-closed-sub">
+            We are deeply grateful for the presence, love, and joy shared by all our dear family and friends! 🌸
+          </p>
+        </div>
       </div>
 
       <!-- Guest List -->

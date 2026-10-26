@@ -2546,3 +2546,60 @@ input, textarea { font-family: var(--sans); }
   font-style: italic;
 }
 
+/* ── RSVP Closed Notice Card ── */
+.rsvp-closed-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(212, 175, 110, 0.35);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeSlideUp 0.55s ease both;
+}
+
+.rsvp-closed-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rose), var(--gold), var(--burgundy));
+}
+
+.rsvp-closed-icon {
+  font-size: 2.8rem;
+  margin-bottom: 0.8rem;
+  line-height: 1;
+}
+
+.rsvp-closed-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  color: var(--burgundy);
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+}
+
+.rsvp-closed-desc {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.8rem;
+}
+
+.rsvp-closed-sub {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-muted, #b49ca8);
+  font-style: italic;
+  line-height: 1.5;
+}
+
